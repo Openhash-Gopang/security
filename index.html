@@ -196,8 +196,21 @@
 
 </div><!-- /dashboard-body -->
 
+<!-- 인증 모달 (고팡 앱 안내 전용 — 독자 로그인 폼 없음) -->
+<div class="auth-modal-bg" id="auth-modal" onclick="if(event.target===this)closeAuthModal()">
+  <div class="auth-modal">
+    <div id="auth-modal-content"></div>
+  </div>
+</div>
+
+<!-- 인증 로딩 오버레이 — 스크립트보다 반드시 앞에 위치 -->
+<div id="auth-loading" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:14px">
+  <div style="width:36px;height:36px;border:3px solid var(--pri-bd);border-top-color:var(--pri);border-radius:50%;animation:spin .75s linear infinite"></div>
+  <div style="font-size:14px;color:var(--sub);font-weight:600">고팡 인증 확인 중…</div>
+  <div style="font-size:11px;color:var(--hint)">gopang.net · K-Security</div>
+</div>
+
 <!-- 비동기 모듈 스크립트: config → 나머지 순차 로드 -->
-<!-- auth.js는 gopang-sso.js를 동적 import하므로 type="module" 불필요 -->
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/dashboard.js"></script>
@@ -206,22 +219,13 @@
 <script src="js/regulation.js"></script>
 <script src="js/ledger.js"></script>
 <script>
-// ── 백서 §12.10 표준 초기화 패턴 ─────────────────────────
-// 1. loading 화면 표시
-// 2. gopangAuth.require('L1') → null이면 리다이렉트 중 (이하 중단)
-// 3. 성공 → loading 숨기고 대시보드 표시
-// ─────────────────────────────────────────────────────────
-
 (async () => {
-  // 인증 완료 전까지 로딩 화면 유지
   document.getElementById('dashboard-body').style.display = 'none';
   document.getElementById('auth-loading').style.display   = 'flex';
 
-  const user = await initAuth();  // gopangAuth.require('L1') 내부 호출
+  const user = await initAuth();
+  if (!user) return;
 
-  if (!user) return;  // null = 리다이렉트 중 — 이하 실행 안 됨
-
-  // 인증 성공 → 대시보드 활성화
   document.getElementById('auth-loading').style.display   = 'none';
   document.getElementById('dashboard-body').style.display = '';
 
@@ -230,29 +234,14 @@
   document.getElementById('fpga-status').textContent = 'FPGA 정상 (412.3 MHz)';
 })();
 
-// ── 탭 전환 + 레벨 게이트 (백서 §12.5) ───────────────────
 async function switchTabAuth(tab, minLevel) {
   if (minLevel) {
-    const ok = await requireLevel(minLevel);  // gopangAuth.verify(level)
+    const ok = await requireLevel(minLevel);
     if (!ok) return;
   }
   switchTab(tab);
 }
 </script>
-
-<!-- 인증 모달 (고팡 앱 안내 전용 — 독자 로그인 폼 없음) -->
-<div class="auth-modal-bg" id="auth-modal" onclick="if(event.target===this)closeAuthModal()">
-  <div class="auth-modal">
-    <div id="auth-modal-content"></div>
-  </div>
-</div>
-
-<!-- 인증 로딩 오버레이 -->
-<div id="auth-loading" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:14px">
-  <div style="width:36px;height:36px;border:3px solid var(--pri-bd);border-top-color:var(--pri);border-radius:50%;animation:spin .75s linear infinite"></div>
-  <div style="font-size:14px;color:var(--sub);font-weight:600">고팡 인증 확인 중…</div>
-  <div style="font-size:11px;color:var(--hint)">gopang.net · K-Security</div>
-</div>
 
 </body>
 </html>
