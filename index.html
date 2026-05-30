@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>고팡 Security — SEOM 보안 인프라</title>
+<meta name="description" content="SEOM(Sovereign Equity OpenHash Market) 디지털 화폐 보안 인프라: FPGA 검증, AI 앙상블, 글로벌 규제 준수, 실시간 재무제표.">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="css/security.css">
+</head>
+<body>
+
+<!-- 상단바 -->
+<div class="topbar">
+  <div class="tb-logo">
+    <div class="tb-logo-mark">S</div>
+    고팡 Security
+  </div>
+  <span class="tb-badge">SEOM v1.0</span>
+  <div class="tb-right">
+    <div class="tb-dot-wrap"><div class="tb-dot" id="fpga-dot"></div><span id="fpga-status">FPGA 검증 중</span></div>
+    <span id="auth-badge" onclick="showAuthPanel()" title="인증 레벨">L0 기기</span>
+    <a href="https://gopang.net"  class="tb-link">← 고팡</a>
+    <a href="https://market.gopang.net" class="tb-link">마켓</a>
+    <a href="https://klaw.openhash.kr"  class="tb-link">K-Law</a>
+  </div>
+</div>
+
+<!-- 히어로 + KPI -->
+<div class="hero">
+  <div class="hero-title">SEOM <em>보안 인프라</em> 대시보드</div>
+  <div class="hero-sub">Sovereign Equity OpenHash Market · FPGA 기반 AI 검증 · 글로벌 규제 자동 준수</div>
+  <div class="kpi-row">
+    <div class="kpi-card" id="kpi-tx">
+      <div class="kpi-label">검증 거래 수</div>
+      <div class="kpi-value">—</div>
+      <div class="kpi-unit">건</div>
+      <div class="kpi-trend ok">로딩 중…</div>
+    </div>
+    <div class="kpi-card" id="kpi-ms">
+      <div class="kpi-label">FPGA 레이턴시</div>
+      <div class="kpi-value">0.032</div>
+      <div class="kpi-unit">ms</div>
+      <div class="kpi-trend ok">✓ 목표 달성</div>
+    </div>
+    <div class="kpi-card" id="kpi-acc">
+      <div class="kpi-label">AI 검증 정확도</div>
+      <div class="kpi-value">99.4</div>
+      <div class="kpi-unit">%</div>
+      <div class="kpi-trend ok">1,000건 실증</div>
+    </div>
+    <div class="kpi-card" id="kpi-vol">
+      <div class="kpi-label">누적 거래량</div>
+      <div class="kpi-value">—</div>
+      <div class="kpi-unit">GDC</div>
+      <div class="kpi-trend ok">로딩 중…</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">규제 준수 국가</div>
+      <div class="kpi-value">15+</div>
+      <div class="kpi-unit">개국</div>
+      <div class="kpi-trend ok">자동 갱신</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">전력 절감</div>
+      <div class="kpi-value">88</div>
+      <div class="kpi-unit">%</div>
+      <div class="kpi-trend ok">vs GPU RTX 4090</div>
+    </div>
+  </div>
+</div>
+
+<!-- 탭 바 + 본문: 인증 전까지 숨김 (§12.10) -->
+<div id="dashboard-body">
+
+<!-- 탭 바 -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="overview"    onclick="switchTab('overview')">🏠 개요</button>
+  <button class="tab-btn"        data-tab="ai"          onclick="switchTab('ai')">🤖 AI 검증</button>
+  <button class="tab-btn"        data-tab="regulation"  onclick="switchTab('regulation')">🌏 글로벌 규제</button>
+  <button class="tab-btn"        data-tab="ledger"      onclick="switchTabAuth('ledger','L1')">📊 재무제표 🔒</button>
+</div>
+
+<!-- 본문 -->
+<div class="page-body">
+
+  <!-- 개요 탭 -->
+  <div id="tab-overview" class="tab-pane">
+    <div class="card-grid col2" style="margin-bottom:14px">
+
+      <!-- FPGA 검증 -->
+      <div class="panel">
+        <div class="panel-hd">
+          <div class="panel-hd-icon blue">⚡</div>
+          <div>
+            <div class="panel-title">FPGA 하드웨어 가속 검증</div>
+            <div class="panel-sub">899K 논리셀 · 1,968 DSP · ZKP 60% / 금융 40%</div>
+          </div>
+          <span class="badge badge-ok" style="margin-left:auto">정상</span>
+        </div>
+        <div class="panel-body" id="fpga-panel">
+          <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">로딩 중…</div></div>
+        </div>
+      </div>
+
+      <!-- 이벤트 피드 -->
+      <div class="panel">
+        <div class="panel-hd">
+          <div class="panel-hd-icon org">📋</div>
+          <div>
+            <div class="panel-title">보안 이벤트 피드</div>
+            <div class="panel-sub">실시간 감지 · 자동 조치</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="event-feed" id="event-feed">
+            <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">로딩 중…</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 최근 거래 검증 로그 -->
+    <div class="panel">
+      <div class="panel-hd">
+        <div class="panel-hd-icon green">🔍</div>
+        <div>
+          <div class="panel-title">실시간 거래 검증 로그</div>
+          <div class="panel-sub">의심도 점수 0.6 미만 승인 · 0.6 이상 거부 · HSM 무결성 검증</div>
+        </div>
+        <span class="badge badge-info" style="margin-left:auto" id="tx-refresh-badge">자동 갱신 15s</span>
+      </div>
+      <div class="panel-body" id="tx-panel">
+        <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">로딩 중…</div></div>
+      </div>
+    </div>
+
+    <!-- 인증 상태 카드 -->
+    <div class="panel" style="margin-top:14px">
+      <div class="panel-hd">
+        <div class="panel-hd-icon blue">🔑</div>
+        <div><div class="panel-title">인증 상태</div><div class="panel-sub">IPv6 정체성 · PDV · OpenHash 분산 신뢰</div></div>
+      </div>
+      <div class="panel-body" id="auth-status-card">
+        <div style="font-size:12px;color:var(--hint)">로딩 중…</div>
+      </div>
+    </div>
+
+    <!-- 시스템 아키텍처 요약 -->
+    <div class="panel" style="margin-top:14px">
+      <div class="panel-hd">
+        <div class="panel-hd-icon pur">🏗️</div>
+        <div>
+          <div class="panel-title">5대 핵심 모듈 아키텍처</div>
+          <div class="panel-sub">특허 도면 1 기반 · AI City Inc. · 출원 17건+</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="card-grid col3">
+          ${[
+            { icon:'💰', name:'화폐 핵심 시스템',    desc:'ERC-20 결제 · ERC-777 투자 · 스마트 컨트랙트', badge:'blue' },
+            { icon:'🤖', name:'AI 검증 엔진',        desc:'BERT · CNN · LSTM 앙상블 · 적대적 훈련',        badge:'pur'  },
+            { icon:'⚡', name:'FPGA 가속기',          desc:'Xilinx VCK190 · BN254 페어링 · 사이드채널 방어', badge:'green'},
+            { icon:'🌏', name:'글로벌 규제 엔진',    desc:'30개국 병렬 검증 · RSS 자동 업데이트',           badge:'teal' },
+            { icon:'🏦', name:'민간 경쟁 관리자',    desc:'발행 경쟁 · 투명성 기반 가치 · 크로스체인',      badge:'org'  },
+            { icon:'🔗', name:'크로스체인 브릿지',   desc:'이더리움 · 폴리곤 · 아비트럼 · zkSync',          badge:'info' },
+          ].map(m => `
+          <div style="background:var(--bg);border-radius:var(--r);padding:14px">
+            <div style="font-size:24px;margin-bottom:8px">${m.icon}</div>
+            <div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:4px">${m.name}</div>
+            <div style="font-size:11px;color:var(--hint);line-height:1.6">${m.desc}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI 검증 탭 -->
+  <div id="tab-ai" class="tab-pane" style="display:none">
+    <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">로딩 중…</div></div>
+  </div>
+
+  <!-- 글로벌 규제 탭 -->
+  <div id="tab-regulation" class="tab-pane" style="display:none">
+    <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">로딩 중…</div></div>
+  </div>
+
+  <!-- 재무제표 탭 -->
+  <div id="tab-ledger" class="tab-pane" style="display:none">
+    <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">로딩 중…</div></div>
+  </div>
+
+</div>
+
+</div><!-- /dashboard-body -->
+
+<!-- 비동기 모듈 스크립트: config → 나머지 순차 로드 -->
+<!-- auth.js는 gopang-sso.js를 동적 import하므로 type="module" 불필요 -->
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/fpga.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/regulation.js"></script>
+<script src="js/ledger.js"></script>
+<script>
+// ── 백서 §12.10 표준 초기화 패턴 ─────────────────────────
+// 1. loading 화면 표시
+// 2. gopangAuth.require('L1') → null이면 리다이렉트 중 (이하 중단)
+// 3. 성공 → loading 숨기고 대시보드 표시
+// ─────────────────────────────────────────────────────────
+
+(async () => {
+  // 인증 완료 전까지 로딩 화면 유지
+  document.getElementById('dashboard-body').style.display = 'none';
+  document.getElementById('auth-loading').style.display   = 'flex';
+
+  const user = await initAuth();  // gopangAuth.require('L1') 내부 호출
+
+  if (!user) return;  // null = 리다이렉트 중 — 이하 실행 안 됨
+
+  // 인증 성공 → 대시보드 활성화
+  document.getElementById('auth-loading').style.display   = 'none';
+  document.getElementById('dashboard-body').style.display = '';
+
+  await initDashboard();
+  document.getElementById('fpga-dot').className     = 'tb-dot';
+  document.getElementById('fpga-status').textContent = 'FPGA 정상 (412.3 MHz)';
+})();
+
+// ── 탭 전환 + 레벨 게이트 (백서 §12.5) ───────────────────
+async function switchTabAuth(tab, minLevel) {
+  if (minLevel) {
+    const ok = await requireLevel(minLevel);  // gopangAuth.verify(level)
+    if (!ok) return;
+  }
+  switchTab(tab);
+}
+</script>
+
+<!-- 인증 모달 (고팡 앱 안내 전용 — 독자 로그인 폼 없음) -->
+<div class="auth-modal-bg" id="auth-modal" onclick="if(event.target===this)closeAuthModal()">
+  <div class="auth-modal">
+    <div id="auth-modal-content"></div>
+  </div>
+</div>
+
+<!-- 인증 로딩 오버레이 -->
+<div id="auth-loading" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:14px">
+  <div style="width:36px;height:36px;border:3px solid var(--pri-bd);border-top-color:var(--pri);border-radius:50%;animation:spin .75s linear infinite"></div>
+  <div style="font-size:14px;color:var(--sub);font-weight:600">고팡 인증 확인 중…</div>
+  <div style="font-size:11px;color:var(--hint)">gopang.net · K-Security</div>
+</div>
+
+</body>
+</html>
