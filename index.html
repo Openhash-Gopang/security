@@ -212,31 +212,55 @@
 
 <!-- 비동기 모듈 스크립트: config → 나머지 순차 로드 -->
 <script src="js/config.js"></script>
-<script src="js/auth.js"></script>
+<script type="module" src="https://gopang.net/auth/subsystem-auth.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/fpga.js"></script>
 <script src="js/ai.js"></script>
 <script src="js/regulation.js"></script>
 <script src="js/ledger.js"></script>
 <script>
-(async () => {
-  document.getElementById('dashboard-body').style.display = 'none';
-  document.getElementById('auth-loading').style.display   = 'flex';
-
-  const user = await initAuth();
+/* ── K-Security SSO 콜백 (§3 한 줄 추가 원칙) ─────────────
+   subsystem-auth.js 가 인증을 전담하고,
+   완료 시 이 함수를 호출합니다.                             */
+window._onGopangAuth = async function(user) {
   if (!user) return;
 
+  // 1. 로딩 오버레이 제거, 대시보드 표시
   document.getElementById('auth-loading').style.display   = 'none';
   document.getElementById('dashboard-body').style.display = '';
 
+  // 2. 인증 배지 갱신
+  const badge = document.getElementById('auth-badge');
+  if (badge) {
+    const lvlCfg = {
+      L0: { label:'L0 기기', color:'rgba(255,255,255,.7)' },
+      L1: { label:'L1 실명', color:'#67e8f9' },
+      L2: { label:'L2 지문', color:'#93c5fd' },
+      L3: { label:'L3 시드', color:'#86efac' },
+    };
+    const c = lvlCfg[user.level] || lvlCfg.L0;
+    badge.textContent = c.label;
+    badge.style.color = c.color;
+    badge.title = (user.ipv6 || '') + ' · ' + (user.via || '');
+  }
+
+  // 3. sessionStorage 저장 (pdv.js _getUserIpv6() 참조)
+  try { sessionStorage.setItem('gopang_sso_token', JSON.stringify(user)); } catch(e) {}
+
+  // 4. 대시보드 초기화
   await initDashboard();
   document.getElementById('fpga-dot').className     = 'tb-dot';
   document.getElementById('fpga-status').textContent = 'FPGA 정상 (412.3 MHz)';
-})();
+
+  // 5. PDV 오프라인 대기열 재전송
+  if (window.PDV?.flushPending) setTimeout(PDV.flushPending, 2000);
+
+  console.info('[K-Security] ✅ 인증 완료 —', user.level, (user.ipv6||'').slice(-8));
+};
 
 async function switchTabAuth(tab, minLevel) {
   if (minLevel) {
-    const ok = await requireLevel(minLevel);
+    const ok = await gopangAuth?.require(minLevel);
     if (!ok) return;
   }
   switchTab(tab);
