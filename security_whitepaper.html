@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-Security 백서 — 고팡 생태계 보안 인프라</title>
+<meta name="description" content="K-Security 백서: 고팡 생태계 22개 하위 시스템 보안 인프라 설계 및 운영 원칙">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+:root {
+  --bg:       #f8f9fa;
+  --sur:      #ffffff;
+  --border:   #e5e7eb;
+  --border2:  #d1d5db;
+  --brand:    #0f766e;
+  --brand-dk: #0d6b63;
+  --brand-lt: #ccfbf1;
+  --brand-bg: #f0fdfa;
+  --text:     #0f172a;
+  --text2:    #1e293b;
+  --text3:    #374151;
+  --text4:    #6b7280;
+  --amber:    #f59e0b;
+  --amber-lt: #fffbeb;
+  --red:      #ef4444;
+  --red-lt:   #fef2f2;
+  --radius:   6px;
+  --shadow:   0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --nav-h:    52px;
+  --sidebar-w:240px;
+}
+body {
+  font-family:'Inter','Noto Sans KR',-apple-system,sans-serif;
+  font-size:14px; line-height:1.7; color:var(--text);
+  background:var(--bg); -webkit-font-smoothing:antialiased;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  height:var(--nav-h); background:rgba(255,255,255,.92);
+  backdrop-filter:blur(12px); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 24px; gap:12px;
+}
+.tb-logo {
+  display:flex; align-items:center; gap:8px;
+  font-weight:600; font-size:14px; color:var(--text); text-decoration:none;
+}
+.tb-logo-icon {
+  width:24px; height:24px; background:var(--brand); border-radius:5px;
+  display:flex; align-items:center; justify-content:center;
+}
+.tb-logo-icon svg { width:13px; height:13px; }
+.tb-sep { color:var(--border2); margin:0 4px; }
+.tb-cur { color:var(--text4); font-size:13px; }
+.tb-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+.tb-btn {
+  padding:5px 12px; border-radius:var(--radius); font-size:12px;
+  font-weight:500; text-decoration:none; border:1px solid var(--border2);
+  color:var(--text3); background:var(--sur); transition:all .15s;
+  display:inline-flex; align-items:center; gap:5px;
+}
+.tb-btn:hover { border-color:var(--brand); color:var(--brand); }
+.tb-btn.green { background:var(--brand); color:#fff; border-color:var(--brand); }
+.tb-btn.green:hover { background:var(--brand-dk); }
+.tb-badge {
+  font-family:'DM Mono',monospace; font-size:11px; font-weight:500;
+  padding:2px 8px; border-radius:4px;
+  background:var(--brand-bg); color:var(--brand); border:1px solid var(--brand-lt);
+}
+
+/* ── 레이아웃 ── */
+.layout {
+  display:flex; padding-top:var(--nav-h); min-height:100vh;
+}
+
+/* ── 사이드바 ── */
+.sidebar {
+  width:var(--sidebar-w); flex-shrink:0;
+  position:sticky; top:var(--nav-h);
+  height:calc(100vh - var(--nav-h));
+  overflow-y:auto; padding:24px 0;
+  border-right:1px solid var(--border);
+  background:var(--sur);
+}
+.sidebar::-webkit-scrollbar { width:4px; }
+.sidebar::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+.sb-label {
+  font-family:'DM Mono',monospace; font-size:10px; font-weight:500;
+  color:var(--text4); letter-spacing:.8px; text-transform:uppercase;
+  padding:0 20px; margin-bottom:6px; margin-top:16px;
+}
+.sb-label:first-child { margin-top:0; }
+.sb-link {
+  display:flex; align-items:center; gap:8px;
+  padding:6px 20px; font-size:13px; color:var(--text3);
+  text-decoration:none; border-left:2px solid transparent;
+  transition:all .12s; line-height:1.4;
+}
+.sb-link:hover { color:var(--text); background:var(--bg); }
+.sb-link.active { color:var(--brand); border-left-color:var(--brand); background:var(--brand-bg); font-weight:500; }
+.sb-num {
+  font-family:'DM Mono',monospace; font-size:10px;
+  color:var(--text4); flex-shrink:0; width:16px;
+}
+
+/* ── 본문 ── */
+.main {
+  flex:1; min-width:0;
+  padding:48px 64px 80px;
+  max-width:860px;
+}
+
+/* ── 헤더 ── */
+.wp-header { margin-bottom:48px; padding-bottom:32px; border-bottom:1px solid var(--border); }
+.wp-eyebrow {
+  font-family:'DM Mono',monospace; font-size:11px; color:var(--brand);
+  letter-spacing:1px; text-transform:uppercase; margin-bottom:12px;
+}
+.wp-title {
+  font-size:clamp(28px,4vw,40px); font-weight:700;
+  letter-spacing:-1.5px; color:var(--text); margin-bottom:8px; line-height:1.1;
+}
+.wp-subtitle { font-size:16px; color:var(--text3); margin-bottom:20px; }
+.wp-meta {
+  display:flex; flex-wrap:wrap; gap:8px;
+}
+.wp-meta-item {
+  display:inline-flex; align-items:center; gap:5px;
+  font-family:'DM Mono',monospace; font-size:11px;
+  color:var(--text4); background:var(--bg);
+  border:1px solid var(--border); border-radius:4px; padding:3px 8px;
+}
+.wp-meta-item strong { color:var(--text3); }
+
+/* ── 섹션 ── */
+.wp-section { margin-bottom:56px; scroll-margin-top:calc(var(--nav-h) + 16px); }
+.sec-num {
+  font-family:'DM Mono',monospace; font-size:11px; color:var(--brand);
+  letter-spacing:.5px; margin-bottom:6px;
+}
+.sec-h2 {
+  font-size:22px; font-weight:700; letter-spacing:-.5px;
+  color:var(--text); margin-bottom:16px; padding-bottom:10px;
+  border-bottom:1px solid var(--border);
+}
+.sec-h3 {
+  font-size:15px; font-weight:600; color:var(--text);
+  margin:24px 0 10px;
+}
+.sec-h4 {
+  font-size:13px; font-weight:600; color:var(--text2);
+  margin:16px 0 8px;
+}
+p { font-size:14px; color:var(--text3); line-height:1.8; margin-bottom:12px; }
+p:last-child { margin-bottom:0; }
+strong { font-weight:600; color:var(--text2); }
+
+/* ── 원칙 카드 ── */
+.principle-list { display:flex; flex-direction:column; gap:10px; margin:16px 0; }
+.principle-card {
+  background:var(--sur); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px 18px;
+  border-left:3px solid var(--brand);
+}
+.principle-card h4 {
+  font-size:13px; font-weight:600; color:var(--brand); margin-bottom:6px;
+}
+.principle-card p { font-size:13px; color:var(--text3); margin:0; }
+blockquote {
+  border-left:3px solid var(--brand-lt); padding:10px 16px;
+  background:var(--brand-bg); border-radius:0 var(--radius) var(--radius) 0;
+  margin:12px 0; font-size:13px; color:var(--text3); font-style:italic;
+}
+
+/* ── 테이블 ── */
+.tbl-wrap {
+  border:1px solid var(--border); border-radius:var(--radius);
+  overflow:hidden; margin:16px 0;
+  box-shadow:var(--shadow);
+}
+table { width:100%; border-collapse:collapse; font-size:13px; }
+thead tr { background:var(--bg); border-bottom:1px solid var(--border); }
+thead th {
+  padding:9px 14px; text-align:left;
+  font-weight:500; color:var(--text4); white-space:nowrap;
+  font-size:12px;
+}
+tbody tr { border-bottom:1px solid var(--border); }
+tbody tr:last-child { border-bottom:none; }
+tbody tr:hover { background:var(--bg); }
+tbody td { padding:10px 14px; color:var(--text2); }
+code {
+  font-family:'DM Mono',monospace; font-size:12px;
+  background:var(--bg); padding:1px 6px;
+  border:1px solid var(--border); border-radius:4px; color:var(--text2);
+}
+
+/* ── 코드 블록 ── */
+pre {
+  background:var(--text); border-radius:var(--radius);
+  padding:20px; overflow-x:auto; margin:16px 0;
+}
+pre code {
+  font-family:'DM Mono',monospace; font-size:12px;
+  color:#e2e8f0; background:none; border:none; padding:0;
+  line-height:1.8;
+}
+.cm { color:#64748b; } /* 주석 */
+.kw { color:#7dd3fc; } /* 키워드 */
+.st { color:#86efac; } /* 문자열 */
+.at { color:#fbbf24; } /* 속성 */
+.nm { color:#f9a8d4; } /* 숫자 */
+
+/* ── 배지 ── */
+.badge {
+  display:inline-block; padding:2px 7px; border-radius:4px;
+  font-family:'DM Mono',monospace; font-size:11px; font-weight:600;
+}
+.badge-ok { background:var(--brand-bg); color:var(--brand); border:1px solid var(--brand-lt); }
+.badge-s1 { background:var(--amber-lt); color:var(--amber); border:1px solid #fde68a; }
+.badge-s2 { background:var(--red-lt); color:var(--red); border:1px solid #fecaca; }
+.badge-s3 { background:var(--red); color:#fff; }
+.badge-prv{ background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd; }
+
+/* ── 흐름도 (텍스트) ── */
+.flow-block {
+  background:var(--text); border-radius:var(--radius);
+  padding:20px 24px; margin:16px 0; font-family:'DM Mono',monospace;
+  font-size:12px; color:#94a3b8; line-height:2; overflow-x:auto;
+}
+.flow-block .fc { color:#7dd3fc; }
+.flow-block .fa { color:#64748b; }
+.flow-block .fh { color:#86efac; }
+
+/* ── 파이프라인 카드 ── */
+.pipeline {
+  display:flex; flex-wrap:wrap; gap:0;
+  border:1px solid var(--border); border-radius:var(--radius);
+  background:var(--sur); overflow:hidden; margin:16px 0;
+  box-shadow:var(--shadow);
+}
+.pipe-step {
+  flex:1; min-width:100px; padding:16px;
+  border-right:1px solid var(--border); text-align:center;
+}
+.pipe-step:last-child { border-right:none; }
+.pipe-step .ps-n {
+  width:22px; height:22px; border-radius:50%;
+  background:var(--brand-bg); color:var(--brand);
+  font-size:11px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 8px;
+}
+.pipe-step h4 { font-size:12px; font-weight:600; color:var(--text); margin-bottom:4px; }
+.pipe-step p  { font-size:11px; color:var(--text4); line-height:1.5; margin:0; }
+
+/* ── 지시 그리드 ── */
+.cmd-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:8px; margin:16px 0;
+}
+.cmd-card {
+  background:var(--sur); border:1px solid var(--border);
+  border-radius:var(--radius); padding:12px 14px;
+}
+.cmd-card code { font-size:11px; color:var(--brand); background:var(--brand-bg); border-color:var(--brand-lt); }
+.cmd-card p { font-size:12px; color:var(--text4); margin:6px 0 0; }
+
+/* ── 보안 모델 계층 ── */
+.layer-list { display:flex; flex-direction:column; gap:6px; margin:16px 0; }
+.layer-row {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px; background:var(--sur);
+  border:1px solid var(--border); border-radius:var(--radius);
+}
+.layer-row:hover { border-color:var(--border2); }
+.layer-num {
+  width:24px; height:24px; border-radius:50%;
+  background:var(--brand); color:#fff;
+  font-size:11px; font-weight:700; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+}
+.layer-title { font-size:13px; font-weight:600; color:var(--text); flex:1; }
+.layer-threat{ font-size:12px; color:var(--text4); flex:1; }
+.layer-resp  { font-size:12px; color:var(--brand); flex:1.5; font-weight:500; }
+
+/* ── 공개/비공개 표 ── */
+.pub-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:12px; margin:16px 0;
+}
+.pub-card {
+  border:1px solid var(--border); border-radius:var(--radius);
+  overflow:hidden;
+}
+.pub-card-hd {
+  padding:8px 14px; font-size:12px; font-weight:600;
+  border-bottom:1px solid var(--border);
+}
+.pub-card.yes .pub-card-hd { background:#f0fdf4; color:#16a34a; }
+.pub-card.no  .pub-card-hd { background:#fef2f2; color:#dc2626; }
+.pub-card ul  { list-style:none; padding:10px 14px; }
+.pub-card li  { font-size:13px; color:var(--text3); padding:3px 0; }
+.pub-card.yes li::before { content:'✓ '; color:#16a34a; font-weight:600; }
+.pub-card.no  li::before { content:'✗ '; color:#dc2626; font-weight:600; }
+
+/* ── 디렉토리 트리 ── */
+.tree {
+  background:var(--text); border-radius:var(--radius);
+  padding:20px 24px; margin:16px 0;
+  font-family:'DM Mono',monospace; font-size:12px;
+  color:#94a3b8; line-height:2;
+}
+.tree .tf { color:#7dd3fc; }
+.tree .tc { color:#64748b; }
+.tree .th { color:#86efac; }
+
+/* ── 푸터 ── */
+footer {
+  border-top:1px solid var(--border); padding:20px 24px;
+  font-size:12px; color:var(--text4); text-align:center;
+  background:var(--sur); line-height:1.8;
+}
+footer a { color:var(--brand); text-decoration:none; }
+
+/* ── 반응형 ── */
+@media(max-width:900px){
+  .sidebar { display:none; }
+  .main { padding:32px 24px 60px; }
+}
+@media(max-width:600px){
+  .pub-grid { grid-template-columns:1fr; }
+  .pipeline { flex-direction:column; }
+  .pipe-step { border-right:none; border-bottom:1px solid var(--border); }
+  .pipe-step:last-child { border-bottom:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <a href="index.html" class="tb-logo">
+    <div class="tb-logo-icon">
+      <svg viewBox="0 0 13 13" fill="none">
+        <path d="M6.5 1L11 3.5V8C11 10.2 9 12 6.5 13C4 12 2 10.2 2 8V3.5L6.5 1Z"
+              stroke="white" stroke-width="1.3" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    K-Security
+  </a>
+  <span class="tb-sep">/</span>
+  <span class="tb-cur">백서</span>
+  <span class="tb-badge">v1.0</span>
+  <div class="tb-right">
+    <a href="dashboard.html" class="tb-btn">대시보드</a>
+    <a href="index.html" class="tb-btn green">← 홈으로</a>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- 사이드바 목차 -->
+  <aside class="sidebar">
+    <div class="sb-label">목차</div>
+    <a href="#s1"  class="sb-link active"><span class="sb-num">01</span>개요 및 설계 철학</a>
+    <a href="#s2"  class="sb-link"><span class="sb-num">02</span>감시 대상 22개 시스템</a>
+    <a href="#s3"  class="sb-link"><span class="sb-num">03</span>보안 에이전트 아키텍처</a>
+    <a href="#s4"  class="sb-link"><span class="sb-num">04</span>AI 기반 이상 탐지 엔진</a>
+    <a href="#s5"  class="sb-link"><span class="sb-num">05</span>이상 징후 분류 체계</a>
+    <a href="#s6"  class="sb-link"><span class="sb-num">06</span>심각도 판정 및 대응</a>
+    <a href="#s7"  class="sb-link"><span class="sb-num">07</span>데이터 흐름 및 저장</a>
+    <a href="#s8"  class="sb-link"><span class="sb-num">08</span>공개 대시보드 원칙</a>
+    <a href="#s9"  class="sb-link"><span class="sb-num">09</span>인증 통합</a>
+    <a href="#s10" class="sb-link"><span class="sb-num">10</span>OpenHash 특별 감시</a>
+    <a href="#s11" class="sb-link"><span class="sb-num">11</span>파일 구조 및 배포</a>
+    <a href="#s12" class="sb-link"><span class="sb-num">12</span>보안 모델 계층 구조</a>
+    <div class="sb-label" style="margin-top:20px">리소스</div>
+    <a href="dashboard.html"              class="sb-link">실시간 대시보드</a>
+    <a href="prompts/security.md"         class="sb-link" target="_blank">AI 시스템 프롬프트</a>
+    <a href="prompts/test-security.html"  class="sb-link" target="_blank">프롬프트 테스트</a>
+    <a href="https://github.com/Openhash-Gopang/security" class="sb-link" target="_blank">GitHub</a>
+  </aside>
+
+  <!-- 본문 -->
+  <main class="main">
+
+    <!-- 헤더 -->
+    <div class="wp-header">
+      <div class="wp-eyebrow">WHITEPAPER</div>
+      <h1 class="wp-title">K-Security 백서</h1>
+      <p class="wp-subtitle">고팡 생태계 보안 인프라 설계 및 운영 원칙</p>
+      <div class="wp-meta">
+        <span class="wp-meta-item"><strong>버전</strong> 1.0</span>
+        <span class="wp-meta-item"><strong>기준</strong> 고팡 생태계 v4.2</span>
+        <span class="wp-meta-item"><strong>도메인</strong> security.gopang.net</span>
+        <span class="wp-meta-item"><strong>발행</strong> 2026-06-05</span>
+        <span class="wp-meta-item"><strong>저작</strong> AI City Inc. · 제주특별자치도</span>
+      </div>
+    </div>
+
+    <!-- §1 -->
+    <section class="wp-section" id="s1">
+      <div class="sec-num">§ 01</div>
+      <h2 class="sec-h2">개요 및 설계 철학</h2>
+
+      <h3 class="sec-h3">1.1 K-Security의 목적</h3>
+      <p>K-Security는 고팡(Gopang) 생태계를 구성하는 <strong>22개 하위 시스템 각각의 해킹 여부, 시스템 오류, 이상 징후를 수시로 또는 백그라운드에서 상시 점검</strong>하는 보안 인프라입니다.</p>
+      <p>K-Security는 일반 사용자를 위한 보안 서비스가 아닙니다. 고팡 생태계 자체의 무결성과 신뢰성을 유지하는 것이 유일한 목적입니다.</p>
+
+      <h3 class="sec-h3">1.2 핵심 설계 원칙</h3>
+      <div class="principle-list">
+        <div class="principle-card">
+          <h4>원칙 1 — 투명성이 신뢰의 근거다</h4>
+          <p>숨김으로써 보안을 달성하지 않는다. 모든 시스템의 보안 상태는 누구나 실시간으로 확인할 수 있다.</p>
+        </div>
+        <div class="principle-card">
+          <h4>원칙 2 — 독자 인증 구현 금지</h4>
+          <p>K-Security는 자체 인증 시스템을 운영하지 않는다. 모든 인증은 gopang.net이 전담한다. K-Security는 결과만 수신한다.</p>
+        </div>
+        <div class="principle-card">
+          <h4>원칙 3 — 한 줄 추가 원칙</h4>
+          <p>각 하위 시스템은 단 하나의 스크립트 태그만 추가하면 보안 감시에 참여한다. 복잡한 설정이나 별도 인증 로직은 불필요하다.</p>
+        </div>
+        <div class="principle-card">
+          <h4>원칙 4 — 증거 기반 판단</h4>
+          <p>K-Security AI는 추측하지 않는다. 보고 데이터에 없는 내용은 판단하지 않으며, 불확실한 경우 명시적으로 표시한다.</p>
+        </div>
+        <div class="principle-card">
+          <h4>원칙 5 — 과소 탐지보다 과다 탐지</h4>
+          <p>오탐(False Positive)이 미탐(False Negative)보다 낫다. 의심스러우면 S1 이상으로 올린다.</p>
+        </div>
+      </div>
+
+      <h3 class="sec-h3">1.3 공개 범위</h3>
+      <div class="pub-grid">
+        <div class="pub-card yes">
+          <div class="pub-card-hd">공개하는 것</div>
+          <ul>
+            <li>시스템별 응답 상태</li>
+            <li>이상 발생 이력</li>
+            <li>조치 완료 여부</li>
+            <li>가동률 통계</li>
+          </ul>
+        </div>
+        <div class="pub-card no">
+          <div class="pub-card-hd">숨기는 것</div>
+          <ul>
+            <li>취약점 상세 내용</li>
+            <li>공격 벡터 정보</li>
+            <li>미해결 취약점 경로</li>
+            <li>인증키·토큰</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- §2 -->
+    <section class="wp-section" id="s2">
+      <div class="sec-num">§ 02</div>
+      <h2 class="sec-h2">감시 대상 — 고팡 생태계 22개 시스템</h2>
+
+      <h3 class="sec-h3">2.1 서비스 시스템 (17개)</h3>
+
+      <h4 class="sec-h4">핵심 인프라</h4>
+      <div class="tbl-wrap"><table><thead><tr><th>시스템</th><th>ID</th><th>도메인</th><th>정상 행동 기준</th></tr></thead><tbody>
+        <tr><td>고팡 메인</td><td><code>gopang</code></td><td>gopang.net</td><td>응답 &lt;500ms, 인증 성공률 &gt;99%, PDV 기록 연속</td></tr>
+        <tr><td>K-Security</td><td><code>security</code></td><td>security.gopang.net</td><td>30초 보고 주기 유지</td></tr>
+        <tr><td>gopang-proxy</td><td><code>gopang-proxy</code></td><td>tensor-city.workers.dev</td><td>/auth /pdv/report /deepseek 응답 &lt;300ms</td></tr>
+      </tbody></table></div>
+
+      <h4 class="sec-h4">안전·사법</h4>
+      <div class="tbl-wrap"><table><thead><tr><th>시스템</th><th>ID</th><th>정상 행동 기준</th></tr></thead><tbody>
+        <tr><td>K-Police</td><td><code>police</code></td><td>신고→PDV→출동번호 흐름 정상</td></tr>
+        <tr><td>K-119</td><td><code>911</code></td><td>응급 분류 1~4급, K-Police 연동 정상</td></tr>
+        <tr><td>K-Law</td><td><code>klaw</code></td><td>30초 쿨다운 모니터, 판결 정확도 9.99/10</td></tr>
+      </tbody></table></div>
+
+      <h4 class="sec-h4">경제·금융</h4>
+      <div class="tbl-wrap"><table><thead><tr><th>시스템</th><th>ID</th><th>정상 행동 기준</th></tr></thead><tbody>
+        <tr><td>GDC</td><td><code>gdc</code></td><td>BIVM <strong>Σδ=0</strong> 항등식 유지, 이중지불 없음</td></tr>
+        <tr><td>K-Tax</td><td><code>tax</code></td><td>거래 발생 즉시 세금 분리, 실시간 정산</td></tr>
+        <tr><td>K-Stock</td><td><code>stock</code></td><td>89개 자산군 갱신, 이상 거래 없음</td></tr>
+        <tr><td>K-Insurance</td><td><code>insurance</code></td><td>유효성 점수 &gt;0.9 유지</td></tr>
+        <tr><td>K-Market</td><td><code>market</code></td><td>주문-결제-PDV 흐름 정상</td></tr>
+      </tbody></table></div>
+
+      <h4 class="sec-h4">교통·물류 / 의료·교육 / 공공·거버넌스</h4>
+      <div class="tbl-wrap"><table><thead><tr><th>시스템</th><th>ID</th><th>정상 행동 기준</th></tr></thead><tbody>
+        <tr><td>K-Traffic</td><td><code>traffic</code></td><td>이동 수단 조합 응답 &lt;1s</td></tr>
+        <tr><td>K-Logistics</td><td><code>logistics</code></td><td>주문-출고-배송 흐름, K-Traffic 연동</td></tr>
+        <tr><td>K-Health</td><td><code>health</code></td><td>AI 주치의 응답 정상, K-119 연동</td></tr>
+        <tr><td>K-School</td><td><code>school</code></td><td>세션 평균 12분, PDV 학습 기록</td></tr>
+        <tr><td>K-Public</td><td><code>public</code></td><td>228개 기관 서비스, 증명서 발급</td></tr>
+        <tr><td>K-Democracy</td><td><code>democracy</code></td><td>DAWN 투표 무결성, 이중 투표 없음</td></tr>
+      </tbody></table></div>
+
+      <h3 class="sec-h3">2.2 OpenHash 네트워크 (5개 노드)</h3>
+      <p>OpenHash는 고팡 생태계의 데이터 무결성 기반입니다. <strong>OpenHash 이상은 전체 생태계 위협으로 간주</strong>하며 최우선 감시 대상입니다.</p>
+      <div class="tbl-wrap"><table><thead><tr><th>노드</th><th>ID</th><th>계층</th><th>관할</th><th>정상 행동 기준</th></tr></thead><tbody>
+        <tr><td>OpenHash L1</td><td><code>openhash-L1-ido1</code></td><td>읍면동</td><td>제주시 이도1동</td><td>블록 주기 ~10초, 해시체인 연속, 4,399TPS</td></tr>
+        <tr><td>OpenHash L2</td><td><code>openhash-L2-jeju-city</code></td><td>시군구</td><td>제주시</td><td>L1 앵커링 수신, ILMV 검증 통과</td></tr>
+        <tr><td>OpenHash L3</td><td><code>openhash-L3-jeju</code></td><td>광역</td><td>제주특별자치도</td><td>L2 집계 정상</td></tr>
+        <tr><td>OpenHash L4</td><td><code>openhash-L4-kr</code></td><td>국가</td><td>대한민국</td><td>L3 집계, 국가 단위 무결성</td></tr>
+        <tr><td>OpenHash L5</td><td><code>openhash-L5-global</code></td><td>글로벌</td><td>전 세계</td><td>전체 앵커링, 19개국 동기화</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <!-- §3 -->
+    <section class="wp-section" id="s3">
+      <div class="sec-num">§ 03</div>
+      <h2 class="sec-h2">보안 에이전트 아키텍처</h2>
+
+      <h3 class="sec-h3">3.1 security-agent.js — 한 줄 부착</h3>
+      <p>각 하위 시스템에 단 하나의 파일만 추가하면 보안 감시에 참여합니다. <code>data-svc</code>와 <code>data-url</code>만 변경하면 22개 시스템 모두 동일하게 적용됩니다.</p>
+      <pre><code><span class="cm">&lt;!-- 각 하위 시스템 &lt;/body&gt; 직전 --&gt;</span>
+<span class="kw">&lt;script</span>
+  <span class="at">src</span>=<span class="st">"https://security.gopang.net/security-agent.js"</span>
+  <span class="at">data-svc</span>=<span class="st">"school"</span>
+  <span class="at">data-url</span>=<span class="st">"school.gopang.net"</span>
+<span class="kw">&gt;&lt;/script&gt;</span></code></pre>
+
+      <h3 class="sec-h3">3.2 자가 진단 항목 (30초 주기)</h3>
+      <div class="tbl-wrap"><table><thead><tr><th>항목</th><th>방법</th><th>이상 기준</th></tr></thead><tbody>
+        <tr><td>인증 상태</td><td><code>gopang_sso_token</code> 유효성 확인</td><td>토큰 만료 또는 없음</td></tr>
+        <tr><td>PDV 흐름</td><td>로컬 대기열 크기 확인</td><td>20건 초과</td></tr>
+        <tr><td>응답시간</td><td>자기 자신 HEAD 요청</td><td>&gt;3,000ms</td></tr>
+      </tbody></table></div>
+
+      <h3 class="sec-h3">3.3 보고서 구조 (6하원칙)</h3>
+      <pre><code>{
+  <span class="at">"who"</span>:  { <span class="at">"svc"</span>: <span class="st">"school"</span>, <span class="at">"url"</span>: <span class="st">"school.gopang.net"</span>, <span class="at">"auth_level"</span>: <span class="st">"L1"</span> },
+  <span class="at">"when"</span>: { <span class="at">"ts"</span>: <span class="st">"2026-06-05T09:00:00Z"</span>, <span class="at">"uptime_sec"</span>: <span class="nm">43200</span> },
+  <span class="at">"where"</span>:{ <span class="at">"origin"</span>: <span class="st">"https://school.gopang.net"</span> },
+  <span class="at">"what"</span>: { <span class="at">"status"</span>: <span class="st">"ok"</span>, <span class="at">"latency_ms"</span>: <span class="nm">142</span>,
+            <span class="at">"auth_ok"</span>: <span class="nm">true</span>, <span class="at">"pdv_ok"</span>: <span class="nm">true</span>, <span class="at">"err_streak"</span>: <span class="nm">0</span> },
+  <span class="at">"how"</span>:  { <span class="at">"method"</span>: <span class="st">"self-report"</span>, <span class="at">"interval_sec"</span>: <span class="nm">30</span> },
+  <span class="at">"why"</span>:  { <span class="at">"triggered"</span>: <span class="st">"interval"</span>, <span class="at">"prev_status"</span>: <span class="st">"ok"</span> }
+}</code></pre>
+
+      <h3 class="sec-h3">3.4 K-Security 지시 이행</h3>
+      <div class="cmd-grid">
+        <div class="cmd-card"><code>DIAGNOSE_NOW</code><p>즉시 추가 진단 보고</p></div>
+        <div class="cmd-card"><code>SET_INTERVAL</code><p>점검 간격 변경 (최소 5초)</p></div>
+        <div class="cmd-card"><code>SHOW_ALERT</code><p>사용자에게 경고 배너 표시</p></div>
+        <div class="cmd-card"><code>HIDE_ALERT</code><p>경고 배너 해제</p></div>
+        <div class="cmd-card"><code>SUSPEND</code><p>서비스 일시 중단 (S3 전용)</p></div>
+        <div class="cmd-card"><code>RESUME</code><p>서비스 재개</p></div>
+        <div class="cmd-card"><code>RELOAD</code><p>페이지 강제 새로고침</p></div>
+      </div>
+
+      <h3 class="sec-h3">3.5 인증과의 융합 — 방안 2</h3>
+      <p><code>subsystem-auth.js</code> v1.1에 보안 에이전트가 자동 통합됩니다. 기존 인증 한 줄이 곧 보안 에이전트 부착입니다.</p>
+      <div class="flow-block">
+<span class="fh">subsystem-auth.js (v1.1)</span>
+  → 인증 완료 (_user 확보)
+  → window._onGopangAuth(user) 호출
+  → <span class="fc">_loadSecurityAgent()</span>          ← v1.1 신규
+      → security-agent.js 동적 삽입
+      → data-svc, data-authLevel 자동 전달</div>
+    </section>
+
+    <!-- §4 -->
+    <section class="wp-section" id="s4">
+      <div class="sec-num">§ 04</div>
+      <h2 class="sec-h2">AI 기반 이상 탐지 엔진</h2>
+
+      <h3 class="sec-h3">4.1 2단계 LLM 파이프라인</h3>
+      <p>빠른 스크리닝과 정확한 심층 분석을 분리하여 비용 효율과 탐지 정확도를 동시에 달성합니다.</p>
+      <div class="pipeline">
+        <div class="pipe-step"><div class="ps-n">1</div><h4>보고 수신</h4><p>30초 간격<br>6하원칙 JSON</p></div>
+        <div class="pipe-step"><div class="ps-n">2</div><h4>DeepSeek V3</h4><p>1차 스크리닝<br>점수 0.0~1.0</p></div>
+        <div class="pipe-step"><div class="ps-n">3</div><h4>Claude Opus</h4><p>점수 ≥0.6 시<br>심층 판정</p></div>
+        <div class="pipe-step"><div class="ps-n">4</div><h4>Supabase</h4><p>이벤트 기록<br>대시보드 반영</p></div>
+        <div class="pipe-step"><div class="ps-n">5</div><h4>알림·대응</h4><p>gopang 앱<br>K-Police</p></div>
+      </div>
+
+      <h3 class="sec-h3">4.2 역할 분담</h3>
+      <div class="tbl-wrap"><table><thead><tr><th>항목</th><th>DeepSeek V3</th><th>Claude Opus</th></tr></thead><tbody>
+        <tr><td>역할</td><td>1차 스크리닝</td><td>2차 심층 판정</td></tr>
+        <tr><td>처리량</td><td>전체 보고 (30초 간격)</td><td>의심 건만 (이상 시)</td></tr>
+        <tr><td>강점</td><td>빠른 응답, 저비용</td><td>높은 정확도, 맥락 이해</td></tr>
+        <tr><td>출력</td><td>점수 + escalate 여부</td><td>심각도 + 대응 방안</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <!-- §5 -->
+    <section class="wp-section" id="s5">
+      <div class="sec-num">§ 05</div>
+      <h2 class="sec-h2">이상 징후 분류 체계</h2>
+
+      <h3 class="sec-h3">5.1 인증 공격</h3>
+      <div class="tbl-wrap"><table><thead><tr><th>패턴</th><th>정의</th></tr></thead><tbody>
+        <tr><td><code>CRED_STUFFING</code></td><td>PDV 기록 없이 인증 요청만 반복 (&gt;10회/분)</td></tr>
+        <tr><td><code>SESSION_HIJACK</code></td><td>동일 IPv6에서 비정상적 레벨 변동 (L0→L3 순간 상승)</td></tr>
+        <tr><td><code>AUTH_BYPASS</code></td><td>auth_ok=false 상태에서 서비스 접근 시도</td></tr>
+        <tr><td><code>SYBIL_ATTACK</code></td><td>신규 IPv6 대량 생성 + 즉시 L1 인증 시도</td></tr>
+      </tbody></table></div>
+
+      <h3 class="sec-h3">5.2 데이터 무결성 공격</h3>
+      <div class="tbl-wrap"><table><thead><tr><th>패턴</th><th>정의</th></tr></thead><tbody>
+        <tr><td><code>HASH_TAMPER</code></td><td>OpenHash 해시값 불일치 (ILMV 검증 실패)</td></tr>
+        <tr><td><code>PDV_INJECT</code></td><td>PDV 기록에 비정상 필드 삽입 시도</td></tr>
+        <tr><td><code>REPLAY_ATTACK</code></td><td>동일 트랜잭션 ID 중복 제출</td></tr>
+        <tr><td><code>DOUBLE_SPEND</code></td><td>GDC BIVM Σδ≠0 감지</td></tr>
+      </tbody></table></div>
+
+      <h3 class="sec-h3">5.3 서비스 공격</h3>
+      <div class="tbl-wrap"><table><thead><tr><th>패턴</th><th>정의</th></tr></thead><tbody>
+        <tr><td><code>DDOS_PROBE</code></td><td>응답시간 급증 후 정상화 반복 (3회 이상/10분)</td></tr>
+        <tr><td><code>SLOWLORIS</code></td><td>연결 유지 + 응답 없음 패턴</td></tr>
+        <tr><td><code>RESOURCE_EXHAUST</code></td><td>err_streak 급증 + latency 폭증 동시 발생</td></tr>
+      </tbody></table></div>
+
+      <h3 class="sec-h3">5.4 AI 시스템 공격</h3>
+      <div class="tbl-wrap"><table><thead><tr><th>패턴</th><th>정의</th></tr></thead><tbody>
+        <tr><td><code>PROMPT_INJECTION</code></td><td>AI 응답에 시스템 프롬프트 유출 징후</td></tr>
+        <tr><td><code>JAILBREAK_ATTEMPT</code></td><td>역할 전환 유도, 제약 우회 시도</td></tr>
+        <tr><td><code>ADVERSARIAL_INPUT</code></td><td>비정상 유니코드, 이상 길이 입력 반복</td></tr>
+        <tr><td><code>MODEL_INVERSION</code></td><td>훈련 데이터 추출 시도 패턴</td></tr>
+      </tbody></table></div>
+
+      <h3 class="sec-h3">5.5 금융 공격</h3>
+      <div class="tbl-wrap"><table><thead><tr><th>패턴</th><th>정의</th></tr></thead><tbody>
+        <tr><td><code>CARD_TESTING</code></td><td>GDC 소액(&lt;1 GDC) 반복 거래 (&gt;5회/분)</td></tr>
+        <tr><td><code>MICRO_TRANSACTION</code></td><td>수수료 우회 목적 분산 거래</td></tr>
+        <tr><td><code>TAX_EVASION_PROBE</code></td><td>K-Tax 정산 직전 거래 취소 반복</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <!-- §6 -->
+    <section class="wp-section" id="s6">
+      <div class="sec-num">§ 06</div>
+      <h2 class="sec-h2">심각도 판정 및 대응 체계</h2>
+
+      <div class="tbl-wrap"><table><thead><tr><th>등급</th><th>이상 점수</th><th>상황</th><th>자동 대응</th></tr></thead><tbody>
+        <tr>
+          <td><span class="badge badge-ok">OK</span></td>
+          <td><code>0.0 ~ 0.4</code></td>
+          <td>정상 운영</td>
+          <td style="color:var(--text4)">없음</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-s1">S1</span></td>
+          <td><code>0.4 ~ 0.6</code></td>
+          <td>응답 지연, PDV 대기열 증가, 단발성 오류</td>
+          <td>운영자 gopang 앱 알림</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-s2">S2</span></td>
+          <td><code>0.6 ~ 0.85</code></td>
+          <td>연속 인증 실패, 프롬프트 인젝션 시도</td>
+          <td>긴급 알림 + 점검 간격 5초</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-s3">S3</span></td>
+          <td><code>0.85 ~</code></td>
+          <td>DOUBLE_SPEND, 해시체인 단절, SYBIL_ATTACK</td>
+          <td>전체 알림 + K-Police + SUSPEND</td>
+        </tr>
+      </tbody></table></div>
+
+      <h3 class="sec-h3">6.1 대응 흐름</h3>
+      <div class="flow-block">
+이상 탐지
+    │
+    ├─ <span class="fc">S1</span> ──→ gopang 앱 알림 (운영자)
+    │
+    ├─ <span class="fc">S2</span> ──→ gopang 앱 긴급 알림 (운영자 + 관리팀)
+    │         점검 간격 5초 단축 (SET_INTERVAL)
+    │         즉시 진단 요청 (DIAGNOSE_NOW)
+    │
+    └─ <span class="fc">S3</span> ──→ gopang 앱 긴급 알림 (전체 이해관계자)
+              <span class="fh">K-Police 자동 연동</span>
+              해당 시스템 SUSPEND 지시
+              security_event 기록 (status: open)</div>
+    </section>
+
+    <!-- §7 -->
+    <section class="wp-section" id="s7">
+      <div class="sec-num">§ 07</div>
+      <h2 class="sec-h2">데이터 흐름 및 저장 구조</h2>
+
+      <h3 class="sec-h3">7.1 전체 데이터 흐름</h3>
+      <div class="flow-block">
+<span class="fh">[하위 시스템 22개]</span>
+  security-agent.js → 30초 보고
+          ↓
+  <span class="fc">gopang-proxy /security/report</span>
+          ↓
+  Supabase <span class="fc">security_log</span> 테이블 (원본 전체)
+          ↓
+  <span class="fh">K-Security AI 분석</span> (DeepSeek → Claude Opus)
+          ↓
+  Supabase <span class="fc">security_event</span> 테이블 (이상 이벤트)
+          ↓
+  [이상 감지 시]
+  gopang webapp → 이해관계자 긴급 메시지
+  <span class="fh">K-Police 연동 (S3)</span></div>
+
+      <h3 class="sec-h3">7.2 Supabase 테이블 및 공개 뷰</h3>
+      <div class="tbl-wrap"><table><thead><tr><th>뷰 / 테이블</th><th>내용</th><th>공개</th></tr></thead><tbody>
+        <tr><td><code>security_status</code></td><td>시스템별 최신 상태</td><td><span class="badge badge-ok">공개</span></td></tr>
+        <tr><td><code>security_uptime_1h</code></td><td>1시간 가동률</td><td><span class="badge badge-ok">공개</span></td></tr>
+        <tr><td><code>security_open_events</code></td><td>미해결 이벤트</td><td><span class="badge badge-ok">공개</span></td></tr>
+        <tr><td><code>security_command</code></td><td>지시 로그</td><td><span class="badge badge-prv">내부 전용</span></td></tr>
+      </tbody></table></div>
+    </section>
+
+    <!-- §8 -->
+    <section class="wp-section" id="s8">
+      <div class="sec-num">§ 08</div>
+      <h2 class="sec-h2">공개 대시보드 원칙</h2>
+      <p>K-Security 대시보드(<code>dashboard.html</code>)는 <strong>인증 없이 누구나</strong> 접근할 수 있습니다. Supabase anon 키로 30초마다 자동 조회하며, 별도 서버 없이 정적 페이지로 운영됩니다.</p>
+      <div class="tbl-wrap"><table><thead><tr><th>페이지</th><th>내용</th></tr></thead><tbody>
+        <tr><td>개요</td><td>22개 시스템 전체 상태 테이블</td></tr>
+        <tr><td>이벤트</td><td>미해결 S1~S3 이벤트 목록</td></tr>
+        <tr><td>업타임</td><td>1시간 가동률 바 그래프</td></tr>
+        <tr><td>카테고리별</td><td>핵심·안전·경제·교통·의료·공공 그룹별 상세</td></tr>
+        <tr><td>OpenHash</td><td>L1~L5 노드 개별 상태</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <!-- §9 -->
+    <section class="wp-section" id="s9">
+      <div class="sec-num">§ 09</div>
+      <h2 class="sec-h2">인증 통합 — 한 줄 추가 원칙</h2>
+      <pre><code><span class="cm">&lt;!-- 모든 하위 시스템 공통 — 이 한 줄이 인증 + 보안 에이전트 --&gt;</span>
+<span class="kw">&lt;script</span> <span class="at">type</span>=<span class="st">"module"</span>
+  <span class="at">src</span>=<span class="st">"https://gopang.net/auth/subsystem-auth.js"</span><span class="kw">&gt;&lt;/script&gt;</span></code></pre>
+
+      <div class="tbl-wrap"><table><thead><tr><th>레벨</th><th>인증 방법</th><th>K-Security 접근 범위</th></tr></thead><tbody>
+        <tr><td><code>L0</code></td><td>기기 자동 인식</td><td>공개 대시보드 조회</td></tr>
+        <tr><td><code>L1</code></td><td>실명 인증</td><td>보안 상담, 이벤트 신고</td></tr>
+        <tr><td><code>L2</code></td><td>생체 인증</td><td>이벤트 처리, 지시 발송</td></tr>
+        <tr><td><code>L3</code></td><td>시드 복원</td><td>시스템 SUSPEND, 법적 증거</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <!-- §10 -->
+    <section class="wp-section" id="s10">
+      <div class="sec-num">§ 10</div>
+      <h2 class="sec-h2">OpenHash 네트워크 특별 감시</h2>
+      <p>OpenHash는 고팡 생태계 데이터 무결성의 최종 근거입니다. 다음 중 하나라도 감지되면 추가 분석 없이 <strong>즉시 S3</strong>로 판정합니다.</p>
+      <div class="principle-list">
+        <div class="principle-card">
+          <h4>자동 S3 판정 조건</h4>
+          <p>ILMV 해시 검증 실패 1건 · 블록 생성 중단 30초 이상 · L1~L5 간 앵커링 불일치 · <code>hash_mismatch</code> 오류 보고</p>
+        </div>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th>감시 항목</th><th>기준</th></tr></thead><tbody>
+        <tr><td>블록 생성 주기</td><td>~10초 유지 여부</td></tr>
+        <tr><td>해시체인 연속성</td><td>이전 블록 해시 일치 여부 (ILMV 검증)</td></tr>
+        <tr><td>TPS</td><td>4,399 TPS 기준 대비 이탈 여부</td></tr>
+        <tr><td>노드 간 동기화</td><td>L1→L2→L3→L4→L5 앵커링 흐름</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <!-- §11 -->
+    <section class="wp-section" id="s11">
+      <div class="sec-num">§ 11</div>
+      <h2 class="sec-h2">파일 구조 및 배포</h2>
+      <div class="tree">
+security/
+│   .nojekyll
+│   CNAME                       <span class="tc">← security.gopang.net</span>
+│   <span class="tf">index.html</span>                  <span class="tc">← 라우터 (모바일→webapp / PC→desktop)</span>
+│   <span class="tf">desktop.html</span>                <span class="tc">← 랜딩 페이지 (소개·링크)</span>
+│   <span class="fh">dashboard.html</span>              <span class="tc">← 실시간 보안 대시보드</span>
+│   <span class="tf">webapp.html</span>                 <span class="tc">← AI 보안 상담 (gopang 호출)</span>
+│   <span class="fh">security-agent.js</span>           <span class="tc">← 하위 시스템 부착 에이전트</span>
+│   <span class="tf">security_whitepaper.html</span>    <span class="tc">← 본 문서</span>
+│
+├───auth/
+│       <span class="fh">subsystem-auth.js</span>         <span class="tc">← v1.1 (gopang_v2 저장소 배포)</span>
+│
+└───prompts/
+        <span class="tf">security.md</span>               <span class="tc">← AI 마스터 시스템 프롬프트</span>
+        <span class="tf">security_schema.sql</span>       <span class="tc">← Supabase 테이블 스키마</span>
+        <span class="tf">test-security.html</span>        <span class="tc">← 프롬프트 테스트</span></div>
+    </section>
+
+    <!-- §12 -->
+    <section class="wp-section" id="s12">
+      <div class="sec-num">§ 12</div>
+      <h2 class="sec-h2">보안 모델 계층 구조</h2>
+      <div class="layer-list">
+        <div class="layer-row"><div class="layer-num">1</div><div class="layer-title">사용자 기기</div><div class="layer-threat">기기 분실·탈취</div><div class="layer-resp">L3 4단어 시드 복원</div></div>
+        <div class="layer-row"><div class="layer-num">2</div><div class="layer-title">통신 구간</div><div class="layer-threat">중간자 공격</div><div class="layer-resp">TLS 1.3 + ECDSA 서명</div></div>
+        <div class="layer-row"><div class="layer-num">3</div><div class="layer-title">PDV 저장</div><div class="layer-threat">무단 열람</div><div class="layer-resp">사용자 공개키 암호화</div></div>
+        <div class="layer-row"><div class="layer-num">4</div><div class="layer-title">OpenHash</div><div class="layer-threat">데이터 위변조</div><div class="layer-resp">SHA-256 해시체인 + ILMV</div></div>
+        <div class="layer-row"><div class="layer-num">5</div><div class="layer-title">AI 시스템</div><div class="layer-threat">프롬프트 인젝션</div><div class="layer-resp">K-Law 백그라운드 모니터</div></div>
+        <div class="layer-row"><div class="layer-num">6</div><div class="layer-title">GDC 결제</div><div class="layer-threat">이중 지불</div><div class="layer-resp">BIVM Σδ=0 + OpenHash 앵커링</div></div>
+        <div class="layer-row"><div class="layer-num">7</div><div class="layer-title">신원 시스템</div><div class="layer-threat">Sybil 공격</div><div class="layer-resp">ECDSA 키 생성 비용 + 스테이킹</div></div>
+        <div class="layer-row"><div class="layer-num">8</div><div class="layer-title">생태계 전체</div><div class="layer-threat">복합 공격</div><div class="layer-resp">K-Security 상시 감시</div></div>
+      </div>
+    </section>
+
+    <p style="font-size:12px;color:var(--text4);padding-top:24px;border-top:1px solid var(--border)">
+      본 백서는 고팡 생태계 v4.2 기준입니다. Supabase, OpenHash, gopang-proxy는 공유 인프라이므로 K-Security 단독으로 수정하지 않습니다.
+    </p>
+
+  </main>
+</div>
+
+<footer>
+  K-Security 백서 v1.0 · © 2026 Gopang Ecosystem · AI City Inc.<br>
+  <a href="index.html">홈</a> · <a href="dashboard.html">대시보드</a> ·
+  <a href="https://github.com/Openhash-Gopang/security" target="_blank">GitHub</a> ·
+  <a href="https://gopang.net">고팡</a>
+</footer>
+
+<script>
+// 스크롤 시 사이드바 활성 항목 업데이트
+const sections = document.querySelectorAll('.wp-section');
+const links    = document.querySelectorAll('.sb-link[href^="#"]');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`.sb-link[href="#${e.target.id}"]`);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { rootMargin:'-20% 0px -70% 0px' });
+sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>
