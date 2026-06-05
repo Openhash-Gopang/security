@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-Security Dashboard — 고팡 생태계 보안 현황</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23171717'/><path d='M16 6l7 4v8c0 4.4-3 8.5-7 10-4-1.5-7-5.6-7-10V10z' fill='none' stroke='%23ededed' stroke-width='1.5'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600;700&display=swap">
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html, body { height:100%; overflow:hidden; }
+
+:root {
+  --bg:       #fcfcfc;
+  --bg1:      #f9f9f9;
+  --bg2:      #f2f2f2;
+  --sur:      #ffffff;
+  --bdr:      #e4e4e4;
+  --bdr2:     #d4d4d4;
+  --txt1:     #171717;
+  --txt2:     #525252;
+  --txt3:     #a3a3a3;
+  --txt4:     #d4d4d4;
+  --acc:      #171717;
+  --acc-bg:   #f5f5f5;
+  --green:    #16a34a;
+  --green-bg: #f0fdf4;
+  --yellow:   #ca8a04;
+  --yel-bg:   #fefce8;
+  --red:      #dc2626;
+  --red-bg:   #fef2f2;
+  --blue:     #2563eb;
+  --blue-bg:  #eff6ff;
+  --r:        6px;
+  --sans:     'Geist', -apple-system, sans-serif;
+  --mono:     'Geist Mono', 'SF Mono', monospace;
+  --sidebar-w: 56px;
+  --topbar-h:  48px;
+}
+
+body {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--txt1);
+  background: var(--bg);
+  display: flex;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ════════════════════════════════
+   SIDEBAR
+════════════════════════════════ */
+.sidebar {
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--sur);
+  border-right: 1px solid var(--bdr);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 2px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 50;
+}
+
+.sb-logo {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+.sb-logo svg { width:26px; height:26px; }
+
+.sb-sep {
+  width: 24px; height: 1px;
+  background: var(--bdr);
+  margin: 4px 0;
+  flex-shrink: 0;
+}
+
+/* 사이드바 버튼 — 호버 시 툴팁(라벨) 표시 */
+.sb-btn {
+  position: relative;
+  width: 38px; height: 38px;
+  border-radius: var(--r);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  border: none; background: transparent;
+  color: var(--txt3);
+  transition: background .12s, color .12s;
+  flex-shrink: 0;
+}
+.sb-btn:hover { background: var(--bg2); color: var(--txt1); }
+.sb-btn.active { background: var(--bg2); color: var(--txt1); }
+.sb-btn svg { width:21px; height:21px; flex-shrink:0; }
+
+/* 툴팁 */
+.sb-btn::after {
+  content: attr(data-label);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%; transform: translateY(-50%);
+  background: var(--txt1);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 12px; font-weight: 500;
+  padding: 4px 9px;
+  border-radius: 5px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .12s;
+  z-index: 200;
+}
+.sb-btn::before {
+  content: '';
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%; transform: translateY(-50%);
+  border: 4px solid transparent;
+  border-right-color: var(--txt1);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .12s;
+  z-index: 200;
+}
+.sb-btn:hover::after,
+.sb-btn:hover::before { opacity: 1; }
+
+.sb-spacer { flex: 1; }
+
+/* ════════════════════════════════
+   MAIN LAYOUT
+════════════════════════════════ */
+.layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* ── 상단바 ── */
+.topbar {
+  height: var(--topbar-h);
+  border-bottom: 1px solid var(--bdr);
+  display: flex; align-items: center;
+  padding: 0 16px; gap: 8px;
+  background: var(--sur);
+  flex-shrink: 0;
+}
+.tb-breadcrumb {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--txt2);
+}
+.tb-breadcrumb .sep { color: var(--txt4); }
+.tb-breadcrumb .cur { color: var(--txt1); font-weight: 500; }
+.tb-right {
+  margin-left: auto; display: flex; align-items: center; gap: 8px;
+}
+.tb-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: 1px solid var(--bdr);
+  border-radius: 5px; padding: 3px 8px;
+  font-size: 12px; color: var(--txt2);
+  background: var(--bg1);
+}
+.tb-badge svg { width:12px; height:12px; }
+.tb-pulse {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+#tb-clock {
+  font-family: var(--mono); font-size: 12px; color: var(--txt3);
+}
+.tb-link {
+  height: 28px; padding: 0 10px;
+  border: 1px solid var(--bdr); border-radius: var(--r);
+  background: var(--sur); color: var(--txt2);
+  font-size: 12px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 5px;
+  text-decoration: none; cursor: pointer;
+  transition: border-color .12s, color .12s;
+}
+.tb-link:hover { border-color: var(--bdr2); color: var(--txt1); }
+.tb-link svg { width:12px; height:12px; }
+
+/* ── 콘텐츠 영역 ── */
+.content {
+  flex: 1; overflow-y: auto;
+  padding: 24px;
+  background: var(--bg);
+}
+
+/* ════════════════════════════════
+   PAGE: 콘텐츠 공통
+════════════════════════════════ */
+.page { display: none; }
+.page.active { display: block; }
+
+.page-hd {
+  margin-bottom: 20px;
+}
+.page-title {
+  font-size: 20px; font-weight: 600;
+  color: var(--txt1); letter-spacing: -.3px;
+  margin-bottom: 4px;
+}
+.page-sub { font-size: 13px; color: var(--txt3); }
+
+/* ── KPI 행 ── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px; margin-bottom: 24px;
+}
+.kpi-card {
+  background: var(--sur);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r);
+  padding: 16px;
+}
+.kpi-label {
+  font-size: 12px; color: var(--txt3);
+  margin-bottom: 8px; font-weight: 500;
+}
+.kpi-value {
+  font-size: 24px; font-weight: 600;
+  color: var(--txt1); line-height: 1;
+  font-family: var(--mono);
+}
+.kpi-value .unit { font-size: 13px; color: var(--txt3); font-weight: 400; }
+.kpi-sub { font-size: 11px; color: var(--txt3); margin-top: 6px; }
+
+/* ── 섹션 헤더 ── */
+.sec-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.sec-title {
+  font-size: 13px; font-weight: 600; color: var(--txt1);
+}
+.sec-count {
+  font-size: 12px; color: var(--txt3);
+  font-family: var(--mono);
+}
+
+/* ── 테이블 ── */
+.tbl-wrap {
+  background: var(--sur);
+  border: 1px solid var(--bdr);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+table { width: 100%; border-collapse: collapse; }
+thead tr {
+  border-bottom: 1px solid var(--bdr);
+  background: var(--bg1);
+}
+thead th {
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 12px; font-weight: 500; color: var(--txt3);
+  white-space: nowrap;
+}
+tbody tr {
+  border-bottom: 1px solid var(--bdr);
+  transition: background .1s;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--bg1); }
+tbody td { padding: 10px 14px; font-size: 13px; color: var(--txt2); }
+tbody td.td-name { color: var(--txt1); font-weight: 500; }
+tbody td.td-mono { font-family: var(--mono); font-size: 12px; }
+
+/* ── 상태 배지 ── */
+.st {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 500;
+  padding: 2px 7px; border-radius: 4px;
+  border: 1px solid transparent;
+}
+.st-dot {
+  width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+}
+.st-ok     { background:var(--green-bg); color:var(--green); border-color:#bbf7d0; }
+.st-ok     .st-dot { background:var(--green); }
+.st-warn   { background:var(--yel-bg);   color:var(--yellow); border-color:#fef08a; }
+.st-warn   .st-dot { background:var(--yellow); }
+.st-error  { background:var(--red-bg);   color:var(--red);    border-color:#fecaca; }
+.st-error  .st-dot { background:var(--red); animation:pulse .8s infinite; }
+.st-offline{ background:var(--bg2);      color:var(--txt3);   border-color:var(--bdr); }
+.st-offline .st-dot { background:var(--txt4); }
+.st-pending{ background:var(--blue-bg);  color:var(--blue);   border-color:#bfdbfe; }
+.st-pending .st-dot { background:var(--blue); }
+
+/* ── 이벤트 심각도 ── */
+.sev {
+  display: inline-flex; align-items: center;
+  font-size: 11px; font-weight: 600;
+  padding: 2px 7px; border-radius: 4px;
+  font-family: var(--mono);
+}
+.sev-S1 { background:var(--yel-bg); color:var(--yellow); border:1px solid #fef08a; }
+.sev-S2 { background:var(--red-bg); color:var(--red);    border:1px solid #fecaca; }
+.sev-S3 { background:var(--red);    color:#fff;           border:1px solid var(--red); }
+
+/* ── 업타임 바 ── */
+.ubar-track {
+  width: 100%; height: 4px;
+  background: var(--bg2); border-radius: 2px; overflow: hidden;
+}
+.ubar-fill {
+  height: 100%; border-radius: 2px; transition: width .6s ease;
+  background: var(--green);
+}
+.ubar-fill.med { background: var(--yellow); }
+.ubar-fill.low { background: var(--red); }
+
+/* ── 빈 상태 ── */
+.empty {
+  padding: 48px 24px; text-align: center;
+  color: var(--txt3); font-size: 13px;
+}
+.empty svg {
+  width: 32px; height: 32px; margin: 0 auto 12px;
+  display: block; color: var(--txt4);
+}
+
+/* 스크롤바 */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bdr2); border-radius: 3px; }
+
+@media(max-width:900px){
+  .content { padding: 16px; }
+  .kpi-row { grid-template-columns: repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- ════ SIDEBAR ════ -->
+<nav class="sidebar">
+
+  <!-- 로고 -->
+  <div class="sb-logo">
+    <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 2L17 5.5V11C17 14.6 13.9 17.9 10 19C6.1 17.9 3 14.6 3 11V5.5L10 2Z"
+            stroke="#171717" stroke-width="1.8" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <!-- 개요 -->
+  <button class="sb-btn active" data-page="overview" data-label="개요"
+          onclick="navigate('overview',this)">
+    <svg viewBox="0 0 16 16" fill="none">
+      <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.6"/>
+      <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.6"/>
+      <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.6"/>
+      <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.6"/>
+    </svg>
+  </button>
+
+  <!-- 이벤트 -->
+  <button class="sb-btn" data-page="events" data-label="이벤트"
+          onclick="navigate('events',this)">
+    <svg viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.6"/>
+      <line x1="8" y1="5" x2="8" y2="8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="8" cy="11" r=".8" fill="currentColor"/>
+    </svg>
+  </button>
+
+  <!-- 업타임 -->
+  <button class="sb-btn" data-page="uptime" data-label="업타임"
+          onclick="navigate('uptime',this)">
+    <svg viewBox="0 0 16 16" fill="none">
+      <polyline points="2,11 5,7 8,9 11,5 14,7" stroke="currentColor" stroke-width="1.6"
+                stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <div class="sb-sep"></div>
+
+  <!-- 하위 시스템 -->
+  <button class="sb-btn" data-page="core"      data-label="핵심 시스템" onclick="navigate('core',this)">
+    <svg viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 2"/>
+    </svg>
+  </button>
+  <button class="sb-btn" data-page="safety"    data-label="안전·사법" onclick="navigate('safety',this)">
+    <svg viewBox="0 0 16 16" fill="none">
+      <path d="M8 2L13 4.5V9C13 11.8 10.8 14.3 8 15C5.2 14.3 3 11.8 3 9V4.5L8 2Z"
+            stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  <button class="sb-btn" data-page="eco"       data-label="경제·금융" onclick="navigate('eco',this)">
+    <svg viewBox="0 0 16 16" fill="none">
+      <rect x="2" y="7" width="2.5" height="7" rx=".5" stroke="currentColor" stroke-width="1.6"/>
+      <rect x="6.75" y="4" width="2.5" height="10" rx=".5" stroke="currentColor" stroke-width="1.6"/>
+      <rect x="11.5" y="2" width="2.5" height="12" rx=".5" stroke="currentColor" stroke-width="1.6"/>
+    </svg>
+  </button>
+  <button class="sb-btn" data-page="transport" data-label="교통·물류" onclick="navigate('transport',this)">
+    <svg viewBox="0 0 16 16" fill="none">
+      <rect x="2" y="5" width="12" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="5" cy="13" r="1.2" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="11" cy="13" r="1.2" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M2 8h12" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M8 5V3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <button class="sb-btn" data-page="life"      data-label="의료·교육" onclick="navigate('life',this)">
+    <svg viewBox="0 0 16 16" fill="none">
+      <path d="M8 14C8 14 3 10.5 3 7a5 5 0 0 1 5-5 5 5 0 0 1 5 5c0 3.5-5 7-5 7z"
+            stroke="currentColor" stroke-width="1.6"/>
+    </svg>
+  </button>
+  <button class="sb-btn" data-page="gov"       data-label="공공·거버넌스" onclick="navigate('gov',this)">
+    <svg viewBox="0 0 16 16" fill="none">
+      <path d="M2 6l6-4 6 4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      <rect x="3" y="6" width="10" height="7" rx=".5" stroke="currentColor" stroke-width="1.6"/>
+      <rect x="6" y="9" width="4" height="4" rx=".5" stroke="currentColor" stroke-width="1.6"/>
+    </svg>
+  </button>
+  <button class="sb-btn" data-page="hash"      data-label="OpenHash 노드" onclick="navigate('hash',this)">
+    <svg viewBox="0 0 16 16" fill="none">
+      <polygon points="8,2 13.5,5 13.5,11 8,14 2.5,11 2.5,5"
+               stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      <polygon points="8,5.5 11,7.2 11,10.8 8,12.5 5,10.8 5,7.2"
+               stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <div class="sb-sep"></div>
+
+  <!-- 설정 (링크) -->
+  <div class="sb-spacer"></div>
+  <a href="https://github.com/Openhash-Gopang/security" target="_blank"
+     class="sb-btn" data-label="GitHub">
+    <svg viewBox="0 0 16 16" fill="currentColor">
+      <path d="M8 1C4.13 1 1 4.13 1 8c0 3.09 2 5.71 4.79 6.63.35.06.48-.15.48-.34
+               0-.17-.01-.73-.01-1.32-1.95.42-2.36-.94-2.36-.94-.32-.81-.78-1.02-.78-1.02
+               -.64-.44.05-.43.05-.43.7.05 1.07.72 1.07.72.62 1.07 1.63.76 2.03.58
+               .06-.45.24-.76.44-.93-1.55-.18-3.19-.78-3.19-3.46
+               0-.76.27-1.39.72-1.88-.07-.18-.31-.89.07-1.86
+               0 0 .59-.19 1.92.72A6.6 6.6 0 0 1 8 4.8c.6 0 1.2.08 1.76.23
+               1.33-.9 1.92-.72 1.92-.72.38.97.14 1.68.07 1.86
+               .45.49.72 1.12.72 1.88 0 2.69-1.64 3.28-3.2 3.45
+               .25.22.48.65.48 1.31 0 .95-.01 1.71-.01 1.94
+               0 .19.13.4.48.33A7.01 7.01 0 0 0 15 8c0-3.87-3.13-7-7-7z"/>
+    </svg>
+  </a>
+  <a href="https://gopang.net" class="sb-btn" data-label="고팡으로">
+    <svg viewBox="0 0 16 16" fill="none">
+      <path d="M10 3l4 5-4 5" stroke="currentColor" stroke-width="1.6"
+            stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M2 8h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+  </a>
+</nav>
+
+<!-- ════ MAIN ════ -->
+<div class="layout">
+
+  <!-- 상단바 -->
+  <div class="topbar">
+    <div class="tb-breadcrumb">
+      <span>고팡</span>
+      <span class="sep">/</span>
+      <span id="tb-section">개요</span>
+      <span class="sep">/</span>
+      <span class="cur" id="tb-page">전체 현황</span>
+    </div>
+    <div class="tb-right">
+      <div class="tb-badge">
+        <div class="tb-pulse"></div>
+        <span>LIVE</span>
+      </div>
+      <span id="tb-clock"></span>
+      <a href="https://supabase.com/dashboard" target="_blank" class="tb-link">
+        <svg viewBox="0 0 12 12" fill="none">
+          <path d="M2 6h8M6 2v8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        Supabase
+      </a>
+    </div>
+  </div>
+
+  <!-- 콘텐츠 -->
+  <div class="content">
+
+    <!-- ── 개요 ── -->
+    <div class="page active" id="page-overview">
+      <div class="page-hd">
+        <div class="page-title">전체 현황</div>
+        <div class="page-sub">고팡 생태계 22개 시스템 실시간 보안 모니터링</div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">온라인 시스템</div>
+          <div class="kpi-value" id="kpi-online">—<span class="unit"> / 22</span></div>
+          <div class="kpi-sub" id="kpi-online-sub">로딩 중…</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">평균 응답시간</div>
+          <div class="kpi-value" id="kpi-lat">—<span class="unit"> ms</span></div>
+          <div class="kpi-sub">최근 1시간</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">전체 업타임</div>
+          <div class="kpi-value" id="kpi-up">—<span class="unit"> %</span></div>
+          <div class="kpi-sub">최근 1시간 평균</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">미해결 이벤트</div>
+          <div class="kpi-value" id="kpi-ev">—</div>
+          <div class="kpi-sub" id="kpi-ev-sub">이상 없음</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">최근 보고</div>
+          <div class="kpi-value" style="font-size:17px" id="kpi-last">—</div>
+          <div class="kpi-sub">마지막 수신 시각</div>
+        </div>
+      </div>
+
+      <div class="sec-hd">
+        <span class="sec-title">시스템 상태</span>
+        <span class="sec-count" id="ov-count">—</span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>시스템</th>
+              <th>URL</th>
+              <th>상태</th>
+              <th>응답시간</th>
+              <th>인증</th>
+              <th>PDV</th>
+              <th>최근 보고</th>
+            </tr>
+          </thead>
+          <tbody id="ov-tbody">
+            <tr><td colspan="7" class="empty">로딩 중…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── 이벤트 ── -->
+    <div class="page" id="page-events">
+      <div class="page-hd">
+        <div class="page-title">보안 이벤트</div>
+        <div class="page-sub">미해결 이상 이벤트 목록 — 심각도순 정렬</div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>심각도</th>
+              <th>시스템</th>
+              <th>제목</th>
+              <th>상세</th>
+              <th>상태</th>
+              <th>발생 시각</th>
+            </tr>
+          </thead>
+          <tbody id="ev-tbody">
+            <tr><td colspan="6" class="empty">로딩 중…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── 업타임 ── -->
+    <div class="page" id="page-uptime">
+      <div class="page-hd">
+        <div class="page-title">업타임 현황</div>
+        <div class="page-sub">최근 1시간 시스템별 가동률</div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>시스템</th>
+              <th>업타임</th>
+              <th style="width:200px">그래프</th>
+              <th>평균 응답</th>
+              <th>최대 응답</th>
+              <th>총 점검 횟수</th>
+            </tr>
+          </thead>
+          <tbody id="up-tbody">
+            <tr><td colspan="6" class="empty">로딩 중…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── 카테고리 페이지 (공통 구조) ── -->
+    <div class="page" id="page-core">
+      <div class="page-hd">
+        <div class="page-title">핵심 시스템</div>
+        <div class="page-sub">gopang · security · 공유 인프라</div>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th>시스템</th><th>URL</th><th>상태</th><th>응답시간</th><th>최근 보고</th>
+      </tr></thead><tbody id="cat-tbody-core"></tbody></table></div>
+    </div>
+
+    <div class="page" id="page-safety">
+      <div class="page-hd">
+        <div class="page-title">안전·사법 시스템</div>
+        <div class="page-sub">K-Police · K-119 · K-Law</div>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th>시스템</th><th>URL</th><th>상태</th><th>응답시간</th><th>최근 보고</th>
+      </tr></thead><tbody id="cat-tbody-safety"></tbody></table></div>
+    </div>
+
+    <div class="page" id="page-eco">
+      <div class="page-hd">
+        <div class="page-title">경제·금융 시스템</div>
+        <div class="page-sub">GDC · K-Tax · K-Stock · K-Insurance · K-Market</div>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th>시스템</th><th>URL</th><th>상태</th><th>응답시간</th><th>최근 보고</th>
+      </tr></thead><tbody id="cat-tbody-eco"></tbody></table></div>
+    </div>
+
+    <div class="page" id="page-transport">
+      <div class="page-hd">
+        <div class="page-title">교통·물류 시스템</div>
+        <div class="page-sub">K-Traffic · K-Logistics</div>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th>시스템</th><th>URL</th><th>상태</th><th>응답시간</th><th>최근 보고</th>
+      </tr></thead><tbody id="cat-tbody-transport"></tbody></table></div>
+    </div>
+
+    <div class="page" id="page-life">
+      <div class="page-hd">
+        <div class="page-title">의료·교육 시스템</div>
+        <div class="page-sub">K-Health · K-School</div>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th>시스템</th><th>URL</th><th>상태</th><th>응답시간</th><th>최근 보고</th>
+      </tr></thead><tbody id="cat-tbody-life"></tbody></table></div>
+    </div>
+
+    <div class="page" id="page-gov">
+      <div class="page-hd">
+        <div class="page-title">공공·거버넌스 시스템</div>
+        <div class="page-sub">K-Public · K-Democracy</div>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th>시스템</th><th>URL</th><th>상태</th><th>응답시간</th><th>최근 보고</th>
+      </tr></thead><tbody id="cat-tbody-gov"></tbody></table></div>
+    </div>
+
+    <div class="page" id="page-hash">
+      <div class="page-hd">
+        <div class="page-title">OpenHash 네트워크</div>
+        <div class="page-sub">L1 읍면동 → L2 시군구 → L3 광역 → L4 국가 → L5 글로벌</div>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr>
+        <th>노드</th><th>계층</th><th>관할</th><th>상태</th><th>응답시간</th><th>최근 보고</th>
+      </tr></thead><tbody id="cat-tbody-hash"></tbody></table></div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /layout -->
+
+<script>
+// ── 설정 ────────────────────────────────────────────────────
+const SUPA_URL  = 'https://ebbecjfrwaswbdybbgiu.supabase.co';
+const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViYmVjamZyd2Fzd2JkeWJiZ2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NjE5ODQsImV4cCI6MjA5NTEzNzk4NH0.H2ahQKtWdSke04Pdi3hDY86pdTx7UUKPUpQMlS_zciA';
+const HDR = { apikey: SUPA_ANON, Authorization: 'Bearer ' + SUPA_ANON };
+
+// ── 시스템 정의 ──────────────────────────────────────────────
+const SYSTEMS = [
+  { id:'gopang',               name:'고팡 메인',    url:'gopang.net',              cat:'core'      },
+  { id:'security',             name:'K-Security',   url:'security.gopang.net',     cat:'core'      },
+  { id:'gopang-proxy',         name:'gopang-proxy', url:'tensor-city.workers.dev', cat:'core'      },
+  { id:'police',               name:'K-Police',     url:'police.gopang.net',       cat:'safety'    },
+  { id:'911',                  name:'K-119',        url:'911.gopang.net',          cat:'safety'    },
+  { id:'klaw',                 name:'K-Law',        url:'klaw.gopang.net',         cat:'safety'    },
+  { id:'gdc',                  name:'GDC',          url:'gdc.gopang.net',          cat:'eco'       },
+  { id:'tax',                  name:'K-Tax',        url:'tax.gopang.net',          cat:'eco'       },
+  { id:'stock',                name:'K-Stock',      url:'stock.gopang.net',        cat:'eco'       },
+  { id:'insurance',            name:'K-Insurance',  url:'insurance.gopang.net',    cat:'eco'       },
+  { id:'market',               name:'K-Market',     url:'market.gopang.net',       cat:'eco'       },
+  { id:'traffic',              name:'K-Traffic',    url:'traffic.gopang.net',      cat:'transport' },
+  { id:'logistics',            name:'K-Logistics',  url:'logistics.gopang.net',    cat:'transport' },
+  { id:'health',               name:'K-Health',     url:'health.gopang.net',       cat:'life'      },
+  { id:'school',               name:'K-School',     url:'school.gopang.net',       cat:'life'      },
+  { id:'public',               name:'K-Public',     url:'public.gopang.net',       cat:'gov'       },
+  { id:'democracy',            name:'K-Democracy',  url:'democracy.gopang.net',    cat:'gov'       },
+  { id:'openhash-L1-ido1',     name:'OpenHash L1',  url:'L1 · 이도1동',            cat:'hash', tier:'L1', area:'제주시 이도1동' },
+  { id:'openhash-L2-jeju-city',name:'OpenHash L2',  url:'L2 · 제주시',             cat:'hash', tier:'L2', area:'제주시 전체'   },
+  { id:'openhash-L3-jeju',     name:'OpenHash L3',  url:'L3 · 제주도',             cat:'hash', tier:'L3', area:'제주특별자치도' },
+  { id:'openhash-L4-kr',       name:'OpenHash L4',  url:'L4 · 대한민국',           cat:'hash', tier:'L4', area:'대한민국'      },
+  { id:'openhash-L5-global',   name:'OpenHash L5',  url:'L5 · 글로벌',             cat:'hash', tier:'L5', area:'전 세계'       },
+];
+
+// ── 상태 캐시 ────────────────────────────────────────────────
+let _status = {}, _uptime = {}, _events = [];
+let _activePage = 'overview';
+
+// ── 네비게이션 ───────────────────────────────────────────────
+const PAGE_META = {
+  overview:  { section:'모니터링', page:'전체 현황' },
+  events:    { section:'모니터링', page:'보안 이벤트' },
+  uptime:    { section:'모니터링', page:'업타임 현황' },
+  core:      { section:'시스템', page:'핵심 시스템' },
+  safety:    { section:'시스템', page:'안전·사법' },
+  eco:       { section:'시스템', page:'경제·금융' },
+  transport: { section:'시스템', page:'교통·물류' },
+  life:      { section:'시스템', page:'의료·교육' },
+  gov:       { section:'시스템', page:'공공·거버넌스' },
+  hash:      { section:'시스템', page:'OpenHash 노드' },
+};
+
+function navigate(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  if (btn) btn.classList.add('active');
+  _activePage = page;
+  const m = PAGE_META[page] || {};
+  document.getElementById('tb-section').textContent = m.section || page;
+  document.getElementById('tb-page').textContent    = m.page    || page;
+  renderPage(page);
+}
+
+// ── 유틸 ────────────────────────────────────────────────────
+function stBadge(status) {
+  const map = {
+    ok:      '<span class="st st-ok"><span class="st-dot"></span>정상</span>',
+    warn:    '<span class="st st-warn"><span class="st-dot"></span>경고</span>',
+    error:   '<span class="st st-error"><span class="st-dot"></span>오류</span>',
+    critical:'<span class="st st-error"><span class="st-dot"></span>위험</span>',
+    offline: '<span class="st st-offline"><span class="st-dot"></span>오프라인</span>',
+    pending: '<span class="st st-pending"><span class="st-dot"></span>대기</span>',
+  };
+  return map[status] || map.pending;
+}
+
+function latCell(ms) {
+  if (!ms) return '<span style="color:var(--txt4)">—</span>';
+  const cls = ms < 300 ? 'color:var(--green)' : ms < 1000 ? 'color:var(--yellow)' : 'color:var(--red)';
+  return `<span style="${cls};font-family:var(--mono);font-size:12px">${ms}ms</span>`;
+}
+
+function boolCell(val) {
+  return val
+    ? '<span style="color:var(--green);font-family:var(--mono);font-size:12px">✓</span>'
+    : '<span style="color:var(--red);font-family:var(--mono);font-size:12px">✗</span>';
+}
+
+function timeCell(iso) {
+  if (!iso) return '<span style="color:var(--txt4)">—</span>';
+  return `<span style="color:var(--txt3);font-family:var(--mono);font-size:11px">
+    ${new Date(iso).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>`;
+}
+
+function catRows(cat) {
+  return SYSTEMS.filter(s => s.cat === cat).map(sys => {
+    const s = _status[sys.id];
+    const st = s?.status || 'pending';
+    return `<tr>
+      <td class="td-name">${sys.name}</td>
+      <td class="td-mono" style="color:var(--txt3)">${sys.url}</td>
+      <td>${stBadge(st)}</td>
+      <td>${latCell(s?.latency_ms)}</td>
+      <td>${timeCell(s?.created_at)}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="5" class="empty">데이터 없음</td></tr>`;
+}
+
+// ── 데이터 조회 ──────────────────────────────────────────────
+async function fetchAll() {
+  await Promise.all([
+    // security_status 뷰 → 없으면 security_log 최신 1건씩으로 대체
+    fetch(`${SUPA_URL}/rest/v1/security_status?select=*`, { headers: HDR })
+      .then(async r => {
+        if (r.status === 404) {
+          // 뷰 미생성 시: security_log에서 직접 집계
+          const r2 = await fetch(
+            `${SUPA_URL}/rest/v1/security_log?select=svc,svc_url,status,latency_ms,auth_ok,pdv_ok,err_streak,last_error,created_at&order=created_at.desc&limit=200`,
+            { headers: HDR }
+          );
+          const rows2 = await r2.json();
+          if (Array.isArray(rows2)) {
+            // svc별 최신 1건만 유지
+            rows2.forEach(row => {
+              if (!_status[row.svc]) _status[row.svc] = row;
+            });
+          }
+          return;
+        }
+        const rows = await r.json();
+        if (Array.isArray(rows)) rows.forEach(r => _status[r.svc] = r);
+      }).catch(()=>{}),
+
+    // security_uptime_1h 뷰 → 없으면 빈 객체 유지
+    fetch(`${SUPA_URL}/rest/v1/security_uptime_1h?select=*`, { headers: HDR })
+      .then(async r => {
+        if (r.status === 404) return; // 뷰 없으면 무시
+        const rows = await r.json();
+        if (Array.isArray(rows)) rows.forEach(r => _uptime[r.svc] = r);
+      }).catch(()=>{}),
+
+    // security_open_events 뷰 → 없으면 security_event 직접 조회
+    fetch(`${SUPA_URL}/rest/v1/security_open_events?select=*&limit=50`, { headers: HDR })
+      .then(async r => {
+        if (r.status === 404) {
+          const r2 = await fetch(
+            `${SUPA_URL}/rest/v1/security_event?select=*&status=neq.resolved&order=created_at.desc&limit=50`,
+            { headers: HDR }
+          );
+          const rows2 = await r2.json();
+          if (Array.isArray(rows2)) _events = rows2;
+          return;
+        }
+        const rows = await r.json();
+        if (Array.isArray(rows)) _events = rows;
+      }).catch(()=>{}),
+  ]);
+}
+
+// ── KPI 갱신 ────────────────────────────────────────────────
+function updateKPI() {
+  const all     = SYSTEMS.map(s => _status[s.id]);
+  const rep     = all.filter(Boolean);
+  const online  = all.filter(s => s?.status === 'ok').length;
+  const issues  = all.filter(s => s && s.status !== 'ok' && s.status !== 'pending').length;
+
+  document.getElementById('kpi-online').innerHTML =
+    `${online}<span class="unit"> / ${SYSTEMS.length}</span>`;
+  document.getElementById('kpi-online-sub').textContent =
+    issues ? `⚠ ${issues}개 이상 감지` : '모든 시스템 정상';
+
+  const lats = rep.map(s => s.latency_ms).filter(Boolean);
+  const avgL = lats.length ? Math.round(lats.reduce((a,b)=>a+b)/lats.length) : null;
+  document.getElementById('kpi-lat').innerHTML =
+    avgL ? `${avgL}<span class="unit"> ms</span>` : `—<span class="unit"> ms</span>`;
+
+  const ups  = Object.values(_uptime).map(u => parseFloat(u.uptime_pct)).filter(Boolean);
+  const avgU = ups.length ? (ups.reduce((a,b)=>a+b)/ups.length).toFixed(1) : null;
+  document.getElementById('kpi-up').innerHTML =
+    avgU ? `${avgU}<span class="unit"> %</span>` : `—<span class="unit"> %</span>`;
+
+  document.getElementById('kpi-ev').textContent = _events.length || '0';
+  document.getElementById('kpi-ev-sub').textContent =
+    _events.length ? `S3: ${_events.filter(e=>e.severity==='S3').length}건` : '이상 없음';
+
+  const latest = rep.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0];
+  document.getElementById('kpi-last').textContent = latest
+    ? new Date(latest.created_at).toLocaleTimeString('ko-KR',
+        {hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '—';
+}
+
+// ── 페이지별 렌더링 ──────────────────────────────────────────
+function renderPage(page) {
+  if (page === 'overview') {
+    document.getElementById('ov-count').textContent = `${SYSTEMS.length}개 시스템`;
+    document.getElementById('ov-tbody').innerHTML = SYSTEMS.map(sys => {
+      const s  = _status[sys.id];
+      const st = s?.status || 'pending';
+      return `<tr>
+        <td class="td-name">${sys.name}</td>
+        <td class="td-mono" style="color:var(--txt3)">${sys.url}</td>
+        <td>${stBadge(st)}</td>
+        <td>${latCell(s?.latency_ms)}</td>
+        <td>${boolCell(s?.auth_ok)}</td>
+        <td>${boolCell(s?.pdv_ok)}</td>
+        <td>${timeCell(s?.created_at)}</td>
+      </tr>`;
+    }).join('');
+    updateKPI();
+  }
+
+  else if (page === 'events') {
+    document.getElementById('ev-tbody').innerHTML = _events.length
+      ? _events.map(ev => {
+          const sys = SYSTEMS.find(s => s.id === ev.svc);
+          const stMap = { open:'<span class="st st-error">미해결</span>',
+                          investigating:'<span class="st st-warn">조사중</span>',
+                          resolved:'<span class="st st-ok">해결</span>' };
+          return `<tr>
+            <td><span class="sev sev-${ev.severity}">${ev.severity}</span></td>
+            <td class="td-name">${sys?.name || ev.svc}</td>
+            <td>${ev.title}</td>
+            <td style="color:var(--txt3)">${ev.detail || '—'}</td>
+            <td>${stMap[ev.status] || ev.status}</td>
+            <td>${timeCell(ev.created_at)}</td>
+          </tr>`;
+        }).join('')
+      : `<tr><td colspan="6">
+           <div class="empty">
+             <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="12"
+               stroke="currentColor" stroke-width="1.6"/>
+               <path d="M12 16l3 3 5-5" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round"/>
+             </svg>
+             미해결 이벤트 없음
+           </div>
+         </td></tr>`;
+  }
+
+  else if (page === 'uptime') {
+    document.getElementById('up-tbody').innerHTML = SYSTEMS.map(sys => {
+      const u   = _uptime[sys.id];
+      const pct = u ? parseFloat(u.uptime_pct) : null;
+      const cls = pct === null ? '' : pct >= 99 ? '' : pct >= 90 ? 'med' : 'low';
+      const pctColor = pct === null ? 'var(--txt4)'
+        : pct >= 99 ? 'var(--green)' : pct >= 90 ? 'var(--yellow)' : 'var(--red)';
+      return `<tr>
+        <td class="td-name">${sys.name}</td>
+        <td style="font-family:var(--mono);font-size:12px;color:${pctColor}">
+          ${pct !== null ? pct + '%' : '—'}</td>
+        <td>
+          <div class="ubar-track">
+            <div class="ubar-fill ${cls}" style="width:${pct||0}%"></div>
+          </div>
+        </td>
+        <td>${latCell(u?.avg_latency_ms)}</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--txt3)">
+          ${u?.max_latency_ms ? u.max_latency_ms+'ms' : '—'}</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--txt3)">
+          ${u?.total_checks || '—'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  else if (page === 'hash') {
+    document.getElementById('cat-tbody-hash').innerHTML =
+      SYSTEMS.filter(s => s.cat === 'hash').map(sys => {
+        const s  = _status[sys.id];
+        const st = s?.status || 'pending';
+        return `<tr>
+          <td class="td-name">${sys.name}</td>
+          <td style="font-family:var(--mono);font-size:12px;color:var(--blue)">${sys.tier}</td>
+          <td style="color:var(--txt3)">${sys.area}</td>
+          <td>${stBadge(st)}</td>
+          <td>${latCell(s?.latency_ms)}</td>
+          <td>${timeCell(s?.created_at)}</td>
+        </tr>`;
+      }).join('');
+  }
+
+  else {
+    // 카테고리 페이지
+    const tbody = document.getElementById('cat-tbody-' + page);
+    if (tbody) tbody.innerHTML = catRows(page);
+  }
+}
+
+// ── 시계 ────────────────────────────────────────────────────
+setInterval(() => {
+  document.getElementById('tb-clock').textContent =
+    new Date().toLocaleTimeString('ko-KR',
+      { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
+}, 1000);
+
+// ── 전체 갱신 ────────────────────────────────────────────────
+async function refresh() {
+  await fetchAll();
+  renderPage(_activePage);
+}
+
+// ── 초기화 ───────────────────────────────────────────────────
+renderPage('overview'); // 스켈레톤
+refresh();
+setInterval(refresh, 30000);
+</script>
+</body>
+</html>

@@ -3,955 +3,853 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>K-Security — 고팡 생태계 보안 현황</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23171717'/><path d='M16 6l7 4v8c0 4.4-3 8.5-7 10-4-1.5-7-5.6-7-10V10z' fill='none' stroke='%23ededed' stroke-width='1.5'/></svg>">
+<title>K-Security — 고팡 생태계 보안 인프라</title>
+<meta name="description" content="고팡 생태계 22개 하위 시스템의 보안을 상시 감시·감독하는 AI 보안 인프라.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600;700&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-html, body { height:100%; overflow:hidden; }
+html { scroll-behavior:smooth; -webkit-font-smoothing:antialiased; }
 
 :root {
-  --bg:       #fcfcfc;
-  --bg1:      #f9f9f9;
-  --bg2:      #f2f2f2;
-  --sur:      #ffffff;
-  --bdr:      #e4e4e4;
-  --bdr2:     #d4d4d4;
-  --txt1:     #171717;
-  --txt2:     #525252;
-  --txt3:     #a3a3a3;
-  --txt4:     #d4d4d4;
-  --acc:      #171717;
-  --acc-bg:   #f5f5f5;
-  --green:    #16a34a;
-  --green-bg: #f0fdf4;
-  --yellow:   #ca8a04;
-  --yel-bg:   #fefce8;
-  --red:      #dc2626;
-  --red-bg:   #fef2f2;
-  --blue:     #2563eb;
-  --blue-bg:  #eff6ff;
-  --r:        6px;
-  --sans:     'Geist', -apple-system, sans-serif;
-  --mono:     'Geist Mono', 'SF Mono', monospace;
-  --sidebar-w: 56px;
-  --topbar-h:  48px;
+  --bg:        #f8f9fa;
+  --bg-alt:    #ffffff;
+  --bg-subtle: #f1f3f5;
+  --surface:   #ffffff;
+  --border:    #e5e7eb;
+  --border2:   #d1d5db;
+  --brand:     #0f766e;
+  --brand-dk:  #0d6b63;
+  --brand-lt:  #ccfbf1;
+  --brand-bg:  #f0fdfa;
+  --blue:      #3b82f6;
+  --blue-lt:   #eff6ff;
+  --amber:     #f59e0b;
+  --amber-lt:  #fffbeb;
+  --red:       #ef4444;
+  --red-lt:    #fef2f2;
+  --text:      #0f172a;
+  --text2:     #1e293b;
+  --text3:     #374151;
+  --text4:     #6b7280;
+  --nav-h:     57px;
+  --radius:    6px;
+  --radius-lg: 10px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+  --shadow:    0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,.07),0 2px 4px -1px rgba(0,0,0,.04);
 }
 
 body {
-  font-family: var(--sans);
-  font-size: 13px;
-  color: var(--txt1);
-  background: var(--bg);
-  display: flex;
-  -webkit-font-smoothing: antialiased;
+  background:var(--bg); color:var(--text);
+  font-family:'Inter','Noto Sans KR',-apple-system,sans-serif;
+  font-size:14px; line-height:1.6; overflow-x:hidden;
 }
 
-/* ════════════════════════════════
-   SIDEBAR
-════════════════════════════════ */
-.sidebar {
-  width: var(--sidebar-w);
-  height: 100vh;
-  background: var(--sur);
-  border-right: 1px solid var(--bdr);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px 0;
-  gap: 2px;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 50;
+/* ── 점 배경 ── */
+.dot-bg {
+  background-color:var(--bg);
+  background-image:radial-gradient(circle,#cbd5e1 1px,transparent 1px);
+  background-size:24px 24px;
 }
 
-.sb-logo {
-  width: 32px; height: 32px;
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 10px;
-  flex-shrink: 0;
+/* ── NAV ── */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:1000;
+  height:var(--nav-h); background:rgba(255,255,255,.92);
+  backdrop-filter:blur(12px); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 24px; gap:16px;
 }
-.sb-logo svg { width:26px; height:26px; }
+.nav-left { display:flex; align-items:center; gap:8px; }
+.nav-logo {
+  display:flex; align-items:center; gap:8px;
+  font-weight:600; font-size:14px; color:var(--text); text-decoration:none;
+}
+.nav-logo-icon {
+  width:26px; height:26px; background:var(--brand);
+  border-radius:6px; display:flex; align-items:center; justify-content:center;
+}
+.nav-logo-icon svg { width:15px; height:15px; }
+.nav-sep { color:var(--border2); font-size:18px; font-weight:200; margin:0 4px; }
+.nav-badge {
+  padding:2px 8px; border-radius:4px; font-size:11px; font-weight:500;
+  background:var(--brand-bg); color:var(--brand); border:1px solid var(--brand-lt);
+  font-family:'DM Mono',monospace;
+}
+.nav-links { display:flex; gap:4px; list-style:none; }
+.nav-links a {
+  padding:5px 10px; border-radius:var(--radius);
+  font-size:13px; color:var(--text3); text-decoration:none;
+  transition:all .15s;
+}
+.nav-links a:hover { color:var(--text); background:var(--bg-subtle); }
+.nav-right { display:flex; align-items:center; gap:8px; }
+.btn-nav {
+  padding:6px 14px; border-radius:var(--radius);
+  font-size:13px; font-weight:500; text-decoration:none;
+  cursor:pointer; border:none; transition:all .15s;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.btn-green { background:var(--brand); color:#fff; box-shadow:var(--shadow-sm); }
+.btn-green:hover { background:var(--brand-dk); }
+.btn-outline { background:#fff; color:var(--text2); border:1px solid var(--border2); }
+.btn-outline:hover { border-color:var(--brand); color:var(--brand); }
 
-.sb-sep {
-  width: 24px; height: 1px;
-  background: var(--bdr);
-  margin: 4px 0;
-  flex-shrink: 0;
+/* ── HERO ── */
+.hero {
+  padding:calc(var(--nav-h) + 56px) 24px 64px;
+  display:flex; flex-direction:column;
+  align-items:center; text-align:center;
+  position:relative; overflow:hidden;
 }
+.hero-eyebrow {
+  display:inline-flex; align-items:center; gap:7px;
+  padding:5px 14px; border-radius:99px;
+  background:var(--bg-subtle); border:1px solid var(--border2);
+  font-family:'DM Mono',monospace; font-size:12px; color:var(--text3);
+  margin-bottom:24px; text-decoration:none;
+  animation:fadeUp .5s ease both;
+}
+.hero-eyebrow:hover { border-color:var(--brand); color:var(--brand-dk); background:var(--brand-bg); }
+.hero-dot { width:6px; height:6px; border-radius:50%; background:var(--brand); animation:blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.hero h1 {
+  font-size:clamp(36px,5.5vw,64px); font-weight:700;
+  line-height:1.05; letter-spacing:-2px; color:var(--text);
+  margin-bottom:14px; animation:fadeUp .5s .08s ease both;
+}
+.hero h1 .brand { color:var(--brand); }
+.hero-desc {
+  max-width:560px; font-size:15px; color:var(--text3);
+  line-height:1.75; margin:0 auto 36px;
+  animation:fadeUp .5s .16s ease both;
+}
+.hero-actions {
+  display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
+  animation:fadeUp .5s .22s ease both;
+}
+.btn-lg {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 20px; border-radius:var(--radius);
+  font-size:13px; font-weight:500; text-decoration:none;
+  cursor:pointer; border:none; transition:all .15s;
+}
+.btn-lg.green { background:var(--brand); color:#fff; box-shadow:var(--shadow-sm); }
+.btn-lg.green:hover { background:var(--brand-dk); transform:translateY(-1px); }
+.btn-lg.outline { background:#fff; color:var(--text2); border:1px solid var(--border2); }
+.btn-lg.outline:hover { border-color:var(--brand); color:var(--brand); transform:translateY(-1px); }
+.btn-lg svg { width:15px; height:15px; flex-shrink:0; }
 
-/* 사이드바 버튼 — 호버 시 툴팁(라벨) 표시 */
-.sb-btn {
-  position: relative;
-  width: 38px; height: 38px;
-  border-radius: var(--r);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  border: none; background: transparent;
-  color: var(--txt3);
-  transition: background .12s, color .12s;
-  flex-shrink: 0;
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
 }
-.sb-btn:hover { background: var(--bg2); color: var(--txt1); }
-.sb-btn.active { background: var(--bg2); color: var(--txt1); }
-.sb-btn svg { width:21px; height:21px; flex-shrink:0; }
-
-/* 툴팁 */
-.sb-btn::after {
-  content: attr(data-label);
-  position: absolute;
-  left: calc(100% + 12px);
-  top: 50%; transform: translateY(-50%);
-  background: var(--txt1);
-  color: #fff;
-  font-family: var(--sans);
-  font-size: 12px; font-weight: 500;
-  padding: 4px 9px;
-  border-radius: 5px;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .12s;
-  z-index: 200;
-}
-.sb-btn::before {
-  content: '';
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 50%; transform: translateY(-50%);
-  border: 4px solid transparent;
-  border-right-color: var(--txt1);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .12s;
-  z-index: 200;
-}
-.sb-btn:hover::after,
-.sb-btn:hover::before { opacity: 1; }
-
-.sb-spacer { flex: 1; }
-
-/* ════════════════════════════════
-   MAIN LAYOUT
-════════════════════════════════ */
-.layout {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-  min-width: 0;
-}
-
-/* ── 상단바 ── */
-.topbar {
-  height: var(--topbar-h);
-  border-bottom: 1px solid var(--bdr);
-  display: flex; align-items: center;
-  padding: 0 16px; gap: 8px;
-  background: var(--sur);
-  flex-shrink: 0;
-}
-.tb-breadcrumb {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 13px; color: var(--txt2);
-}
-.tb-breadcrumb .sep { color: var(--txt4); }
-.tb-breadcrumb .cur { color: var(--txt1); font-weight: 500; }
-.tb-right {
-  margin-left: auto; display: flex; align-items: center; gap: 8px;
-}
-.tb-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  border: 1px solid var(--bdr);
-  border-radius: 5px; padding: 3px 8px;
-  font-size: 12px; color: var(--txt2);
-  background: var(--bg1);
-}
-.tb-badge svg { width:12px; height:12px; }
-.tb-pulse {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--green);
-  animation: pulse 2s infinite;
-}
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-#tb-clock {
-  font-family: var(--mono); font-size: 12px; color: var(--txt3);
-}
-.tb-link {
-  height: 28px; padding: 0 10px;
-  border: 1px solid var(--bdr); border-radius: var(--r);
-  background: var(--sur); color: var(--txt2);
-  font-size: 12px; font-weight: 500;
-  display: inline-flex; align-items: center; gap: 5px;
-  text-decoration: none; cursor: pointer;
-  transition: border-color .12s, color .12s;
-}
-.tb-link:hover { border-color: var(--bdr2); color: var(--txt1); }
-.tb-link svg { width:12px; height:12px; }
-
-/* ── 콘텐츠 영역 ── */
-.content {
-  flex: 1; overflow-y: auto;
-  padding: 24px;
-  background: var(--bg);
-}
-
-/* ════════════════════════════════
-   PAGE: 콘텐츠 공통
-════════════════════════════════ */
-.page { display: none; }
-.page.active { display: block; }
-
-.page-hd {
-  margin-bottom: 20px;
-}
-.page-title {
-  font-size: 20px; font-weight: 600;
-  color: var(--txt1); letter-spacing: -.3px;
-  margin-bottom: 4px;
-}
-.page-sub { font-size: 13px; color: var(--txt3); }
 
 /* ── KPI 행 ── */
-.kpi-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px; margin-bottom: 24px;
+.kpi-strip {
+  display:flex; flex-wrap:wrap; gap:0;
+  border:1px solid var(--border); border-radius:var(--radius-lg);
+  background:#fff; overflow:hidden;
+  margin:40px auto 0; max-width:720px; width:100%;
+  animation:fadeUp .5s .28s ease both; box-shadow:var(--shadow);
 }
-.kpi-card {
-  background: var(--sur);
-  border: 1px solid var(--bdr);
-  border-radius: var(--r);
-  padding: 16px;
+.kpi-item {
+  flex:1; min-width:130px; padding:16px 20px;
+  border-right:1px solid var(--border); text-align:center;
 }
-.kpi-label {
-  font-size: 12px; color: var(--txt3);
-  margin-bottom: 8px; font-weight: 500;
+.kpi-item:last-child { border-right:none; }
+.kpi-num {
+  font-family:'DM Mono',monospace; font-size:22px; font-weight:500;
+  color:var(--text); line-height:1;
 }
-.kpi-value {
-  font-size: 24px; font-weight: 600;
-  color: var(--txt1); line-height: 1;
-  font-family: var(--mono);
-}
-.kpi-value .unit { font-size: 13px; color: var(--txt3); font-weight: 400; }
-.kpi-sub { font-size: 11px; color: var(--txt3); margin-top: 6px; }
+.kpi-num .unit { font-size:12px; color:var(--text4); font-weight:400; margin-left:2px; }
+.kpi-lbl { font-size:11px; color:var(--text4); margin-top:4px; }
 
-/* ── 섹션 헤더 ── */
-.sec-hd {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 12px;
+/* ── SECTION 공통 ── */
+.section { padding:80px 8%; }
+.section-inner { max-width:860px; margin:0 auto; }
+.section-tag {
+  display:inline-block; padding:3px 10px; border-radius:99px;
+  font-family:'DM Mono',monospace; font-size:11px; font-weight:500;
+  background:var(--brand-bg); color:var(--brand);
+  border:1px solid var(--brand-lt); margin-bottom:14px; letter-spacing:.3px;
 }
-.sec-title {
-  font-size: 13px; font-weight: 600; color: var(--txt1);
+.section-title {
+  font-size:clamp(22px,3vw,32px); font-weight:700;
+  letter-spacing:-1px; color:var(--text); margin-bottom:12px; line-height:1.2;
 }
-.sec-count {
-  font-size: 12px; color: var(--txt3);
-  font-family: var(--mono);
-}
+.section-body { font-size:15px; color:var(--text3); line-height:1.8; max-width:640px; }
 
-/* ── 테이블 ── */
-.tbl-wrap {
-  background: var(--sur);
-  border: 1px solid var(--bdr);
-  border-radius: var(--r);
-  overflow: hidden;
-  margin-bottom: 24px;
+/* ── 작동 방식 스텝 ── */
+.steps { display:flex; flex-direction:column; gap:0; margin-top:40px; }
+.step-row {
+  display:flex; gap:20px; padding:20px 0;
+  border-bottom:1px solid var(--border);
 }
-table { width: 100%; border-collapse: collapse; }
-thead tr {
-  border-bottom: 1px solid var(--bdr);
-  background: var(--bg1);
+.step-row:last-child { border-bottom:none; }
+.step-num {
+  width:32px; height:32px; border-radius:50%; background:var(--brand);
+  color:#fff; font-size:13px; font-weight:700; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
 }
-thead th {
-  padding: 9px 14px;
-  text-align: left;
-  font-size: 12px; font-weight: 500; color: var(--txt3);
-  white-space: nowrap;
-}
-tbody tr {
-  border-bottom: 1px solid var(--bdr);
-  transition: background .1s;
-}
-tbody tr:last-child { border-bottom: none; }
-tbody tr:hover { background: var(--bg1); }
-tbody td { padding: 10px 14px; font-size: 13px; color: var(--txt2); }
-tbody td.td-name { color: var(--txt1); font-weight: 500; }
-tbody td.td-mono { font-family: var(--mono); font-size: 12px; }
-
-/* ── 상태 배지 ── */
-.st {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 11px; font-weight: 500;
-  padding: 2px 7px; border-radius: 4px;
-  border: 1px solid transparent;
-}
-.st-dot {
-  width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
-}
-.st-ok     { background:var(--green-bg); color:var(--green); border-color:#bbf7d0; }
-.st-ok     .st-dot { background:var(--green); }
-.st-warn   { background:var(--yel-bg);   color:var(--yellow); border-color:#fef08a; }
-.st-warn   .st-dot { background:var(--yellow); }
-.st-error  { background:var(--red-bg);   color:var(--red);    border-color:#fecaca; }
-.st-error  .st-dot { background:var(--red); animation:pulse .8s infinite; }
-.st-offline{ background:var(--bg2);      color:var(--txt3);   border-color:var(--bdr); }
-.st-offline .st-dot { background:var(--txt4); }
-.st-pending{ background:var(--blue-bg);  color:var(--blue);   border-color:#bfdbfe; }
-.st-pending .st-dot { background:var(--blue); }
-
-/* ── 이벤트 심각도 ── */
-.sev {
-  display: inline-flex; align-items: center;
-  font-size: 11px; font-weight: 600;
-  padding: 2px 7px; border-radius: 4px;
-  font-family: var(--mono);
-}
-.sev-S1 { background:var(--yel-bg); color:var(--yellow); border:1px solid #fef08a; }
-.sev-S2 { background:var(--red-bg); color:var(--red);    border:1px solid #fecaca; }
-.sev-S3 { background:var(--red);    color:#fff;           border:1px solid var(--red); }
-
-/* ── 업타임 바 ── */
-.ubar-track {
-  width: 100%; height: 4px;
-  background: var(--bg2); border-radius: 2px; overflow: hidden;
-}
-.ubar-fill {
-  height: 100%; border-radius: 2px; transition: width .6s ease;
-  background: var(--green);
-}
-.ubar-fill.med { background: var(--yellow); }
-.ubar-fill.low { background: var(--red); }
-
-/* ── 빈 상태 ── */
-.empty {
-  padding: 48px 24px; text-align: center;
-  color: var(--txt3); font-size: 13px;
-}
-.empty svg {
-  width: 32px; height: 32px; margin: 0 auto 12px;
-  display: block; color: var(--txt4);
+.step-body h4 { font-size:14px; font-weight:600; color:var(--text); margin-bottom:5px; }
+.step-body p  { font-size:13px; color:var(--text3); line-height:1.65; }
+.step-body code {
+  font-family:'DM Mono',monospace; font-size:12px;
+  background:var(--bg-subtle); padding:1px 6px; border-radius:4px;
+  border:1px solid var(--border);
 }
 
-/* 스크롤바 */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--bdr2); border-radius: 3px; }
+/* ── 카드 그리드 ── */
+.card-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:12px; margin-top:32px;
+}
+.feature-card {
+  background:#fff; border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:22px; transition:all .2s;
+}
+.feature-card:hover { border-color:var(--brand); box-shadow:var(--shadow-md); transform:translateY(-2px); }
+.feature-card .fc-icon {
+  width:36px; height:36px; border-radius:8px;
+  background:var(--brand-bg); border:1px solid var(--brand-lt);
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:14px;
+}
+.feature-card .fc-icon svg { width:18px; height:18px; color:var(--brand); }
+.feature-card h3 { font-size:14px; font-weight:600; color:var(--text); margin-bottom:7px; }
+.feature-card p  { font-size:13px; color:var(--text3); line-height:1.65; }
 
-@media(max-width:900px){
-  .content { padding: 16px; }
-  .kpi-row { grid-template-columns: repeat(2,1fr); }
+/* ── 에이전트 코드 블록 ── */
+.agent-block {
+  background:var(--text); border-radius:var(--radius-lg);
+  padding:24px; margin-top:32px; overflow-x:auto;
+}
+.agent-block pre {
+  font-family:'DM Mono',monospace; font-size:13px;
+  color:#e2e8f0; line-height:1.7;
+}
+.agent-block .cm { color:#64748b; }
+.agent-block .kw { color:#7dd3fc; }
+.agent-block .st { color:#86efac; }
+.agent-block .at { color:#fbbf24; }
+
+/* ── AI 파이프라인 ── */
+.pipeline {
+  display:flex; align-items:center; flex-wrap:wrap;
+  gap:0; margin-top:32px;
+  background:#fff; border:1px solid var(--border);
+  border-radius:var(--radius-lg); overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.pipe-step {
+  flex:1; min-width:160px; padding:20px;
+  border-right:1px solid var(--border); text-align:center;
+}
+.pipe-step:last-child { border-right:none; }
+.pipe-step .ps-num {
+  width:24px; height:24px; border-radius:50%; background:var(--brand-bg);
+  color:var(--brand); font-size:11px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 8px;
+}
+.pipe-step h4 { font-size:13px; font-weight:600; color:var(--text); margin-bottom:5px; }
+.pipe-step p  { font-size:12px; color:var(--text4); line-height:1.5; }
+.pipe-arr {
+  padding:0 4px; color:var(--text4); font-size:18px; flex-shrink:0;
+}
+
+/* ── 심각도 테이블 ── */
+.sev-table { width:100%; border-collapse:collapse; margin-top:24px; }
+.sev-table th {
+  padding:9px 14px; text-align:left; font-size:12px;
+  font-weight:500; color:var(--text4); border-bottom:1px solid var(--border);
+  background:var(--bg-subtle);
+}
+.sev-table td { padding:11px 14px; border-bottom:1px solid var(--border); font-size:13px; }
+.sev-table tr:last-child td { border-bottom:none; }
+.sev-badge {
+  display:inline-block; padding:2px 8px; border-radius:4px;
+  font-family:'DM Mono',monospace; font-size:11px; font-weight:600;
+}
+.sev-s1 { background:var(--amber-lt); color:var(--amber); border:1px solid #fde68a; }
+.sev-s2 { background:var(--red-lt);   color:var(--red);   border:1px solid #fecaca; }
+.sev-s3 { background:var(--red);      color:#fff; }
+.sev-ok { background:var(--brand-bg); color:var(--brand); border:1px solid var(--brand-lt); }
+
+/* ── 링크 카드 ── */
+.link-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:12px; margin-top:32px;
+}
+.link-card {
+  background:#fff; border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:20px; text-decoration:none; color:inherit;
+  transition:all .2s; display:flex; flex-direction:column; gap:10px;
+}
+.link-card:hover { border-color:var(--brand); transform:translateY(-2px); box-shadow:var(--shadow-md); }
+.lc-icon {
+  width:36px; height:36px; border-radius:8px;
+  background:var(--brand-bg); border:1px solid var(--brand-lt);
+  display:flex; align-items:center; justify-content:center;
+}
+.lc-icon svg { width:18px; height:18px; color:var(--brand); }
+.lc-title { font-size:14px; font-weight:600; color:var(--text); }
+.lc-desc  { font-size:12px; color:var(--text4); line-height:1.5; }
+.lc-arrow { font-size:12px; color:var(--brand); margin-top:auto; }
+
+/* ── 흰 배경 섹션 ── */
+.section-white { background:#fff; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+
+/* ── FOOTER ── */
+footer {
+  border-top:1px solid var(--border); padding:28px 24px;
+  display:flex; justify-content:space-between; align-items:center;
+  flex-wrap:wrap; gap:12px; background:#fff;
+}
+.footer-l { font-size:12px; color:var(--text4); line-height:1.8; }
+.footer-r { display:flex; gap:16px; flex-wrap:wrap; }
+.footer-r a { font-size:12px; color:var(--text4); text-decoration:none; }
+.footer-r a:hover { color:var(--brand); }
+
+/* ── 폰 목업 모달 ── */
+#webapp-modal {
+  display:none; position:fixed; inset:0; z-index:2000;
+  background:rgba(0,0,0,.6); backdrop-filter:blur(8px);
+  align-items:center; justify-content:center;
+  flex-direction:column; gap:16px;
+}
+#webapp-modal.open { display:flex; }
+#phone-wrapper { position:relative; }
+#modal-close {
+  position:absolute; top:-16px; right:-16px; z-index:10;
+  width:32px; height:32px; border-radius:50%;
+  background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.2);
+  color:#fff; font-size:16px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .15s;
+}
+#modal-close:hover { background:rgba(255,255,255,.25); }
+#phone-frame {
+  width:320px; height:640px; position:relative;
+  background:#1c1c1e; border-radius:52px;
+  box-shadow:0 0 0 1px rgba(255,255,255,.08),0 32px 64px rgba(0,0,0,.6),inset 0 0 0 2px #3a3a3c;
+}
+.phone-top {
+  position:absolute; top:0; left:0; right:0; height:48px;
+  border-radius:52px 52px 0 0; z-index:10;
+  display:flex; align-items:center; justify-content:center;
+}
+.phone-speaker { width:56px; height:5px; background:#2c2c2e; border-radius:3px; }
+.phone-btn-vol-up { position:absolute; left:-3px; top:120px; width:3px; height:34px; background:#2c2c2e; border-radius:2px; }
+.phone-btn-vol-dn { position:absolute; left:-3px; top:168px; width:3px; height:34px; background:#2c2c2e; border-radius:2px; }
+.phone-btn-power  { position:absolute; right:-3px; top:148px; width:3px; height:52px; background:#2c2c2e; border-radius:2px; }
+.phone-screen {
+  position:absolute; top:12px; left:12px; right:12px; bottom:12px;
+  border-radius:40px; overflow:hidden; background:#09090f;
+}
+.phone-screen iframe { width:100%; height:100%; border:none; }
+.phone-bottom { position:absolute; bottom:0; left:0; right:0; height:34px; display:flex; align-items:center; justify-content:center; }
+.phone-home-bar { width:120px; height:4px; background:rgba(255,255,255,.25); border-radius:2px; }
+#modal-label {
+  font-family:'DM Mono',monospace; font-size:11px;
+  color:rgba(255,255,255,.4); letter-spacing:.5px;
+  display:flex; align-items:center; gap:6px;
+}
+.modal-dot { width:6px; height:6px; border-radius:50%; background:var(--brand); animation:blink 2s infinite; }
+
+@media(max-width:768px){
+  .section { padding:56px 5%; }
+  .kpi-strip { flex-wrap:wrap; }
+  .kpi-item { min-width:100px; }
+  .pipeline { flex-direction:column; }
+  .pipe-step { border-right:none; border-bottom:1px solid var(--border); }
+  .pipe-step:last-child { border-bottom:none; }
+  .pipe-arr { display:none; }
+  nav .nav-links { display:none; }
+  footer { flex-direction:column; text-align:center; }
 }
 </style>
 </head>
 <body>
 
-<!-- ════ SIDEBAR ════ -->
-<nav class="sidebar">
-
-  <!-- 로고 -->
-  <div class="sb-logo">
-    <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M10 2L17 5.5V11C17 14.6 13.9 17.9 10 19C6.1 17.9 3 14.6 3 11V5.5L10 2Z"
-            stroke="#171717" stroke-width="1.8" stroke-linejoin="round"/>
-    </svg>
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon">
+        <svg viewBox="0 0 15 15" fill="none">
+          <path d="M7.5 1.5L13 4.5V9.5C13 12 10.5 14 7.5 15C4.5 14 2 12 2 9.5V4.5L7.5 1.5Z"
+                stroke="white" stroke-width="1.4" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      K-Security
+    </a>
+    <span class="nav-sep">/</span>
+    <span class="nav-badge">v1.0</span>
+    <ul class="nav-links">
+      <li><a href="#how">작동 방식</a></li>
+      <li><a href="#ai">AI 엔진</a></li>
+      <li><a href="#severity">심각도</a></li>
+      <li><a href="#links">리소스</a></li>
+    </ul>
   </div>
-
-  <!-- 개요 -->
-  <button class="sb-btn active" data-page="overview" data-label="개요"
-          onclick="navigate('overview',this)">
-    <svg viewBox="0 0 16 16" fill="none">
-      <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.6"/>
-      <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.6"/>
-      <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.6"/>
-      <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.6"/>
-    </svg>
-  </button>
-
-  <!-- 이벤트 -->
-  <button class="sb-btn" data-page="events" data-label="이벤트"
-          onclick="navigate('events',this)">
-    <svg viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.6"/>
-      <line x1="8" y1="5" x2="8" y2="8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-      <circle cx="8" cy="11" r=".8" fill="currentColor"/>
-    </svg>
-  </button>
-
-  <!-- 업타임 -->
-  <button class="sb-btn" data-page="uptime" data-label="업타임"
-          onclick="navigate('uptime',this)">
-    <svg viewBox="0 0 16 16" fill="none">
-      <polyline points="2,11 5,7 8,9 11,5 14,7" stroke="currentColor" stroke-width="1.6"
-                stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </button>
-
-  <div class="sb-sep"></div>
-
-  <!-- 하위 시스템 -->
-  <button class="sb-btn" data-page="core"      data-label="핵심 시스템" onclick="navigate('core',this)">
-    <svg viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.6"/>
-      <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 2"/>
-    </svg>
-  </button>
-  <button class="sb-btn" data-page="safety"    data-label="안전·사법" onclick="navigate('safety',this)">
-    <svg viewBox="0 0 16 16" fill="none">
-      <path d="M8 2L13 4.5V9C13 11.8 10.8 14.3 8 15C5.2 14.3 3 11.8 3 9V4.5L8 2Z"
-            stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-    </svg>
-  </button>
-  <button class="sb-btn" data-page="eco"       data-label="경제·금융" onclick="navigate('eco',this)">
-    <svg viewBox="0 0 16 16" fill="none">
-      <rect x="2" y="7" width="2.5" height="7" rx=".5" stroke="currentColor" stroke-width="1.6"/>
-      <rect x="6.75" y="4" width="2.5" height="10" rx=".5" stroke="currentColor" stroke-width="1.6"/>
-      <rect x="11.5" y="2" width="2.5" height="12" rx=".5" stroke="currentColor" stroke-width="1.6"/>
-    </svg>
-  </button>
-  <button class="sb-btn" data-page="transport" data-label="교통·물류" onclick="navigate('transport',this)">
-    <svg viewBox="0 0 16 16" fill="none">
-      <rect x="2" y="5" width="12" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
-      <circle cx="5" cy="13" r="1.2" stroke="currentColor" stroke-width="1.6"/>
-      <circle cx="11" cy="13" r="1.2" stroke="currentColor" stroke-width="1.6"/>
-      <path d="M2 8h12" stroke="currentColor" stroke-width="1.6"/>
-      <path d="M8 5V3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-    </svg>
-  </button>
-  <button class="sb-btn" data-page="life"      data-label="의료·교육" onclick="navigate('life',this)">
-    <svg viewBox="0 0 16 16" fill="none">
-      <path d="M8 14C8 14 3 10.5 3 7a5 5 0 0 1 5-5 5 5 0 0 1 5 5c0 3.5-5 7-5 7z"
-            stroke="currentColor" stroke-width="1.6"/>
-    </svg>
-  </button>
-  <button class="sb-btn" data-page="gov"       data-label="공공·거버넌스" onclick="navigate('gov',this)">
-    <svg viewBox="0 0 16 16" fill="none">
-      <path d="M2 6l6-4 6 4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-      <rect x="3" y="6" width="10" height="7" rx=".5" stroke="currentColor" stroke-width="1.6"/>
-      <rect x="6" y="9" width="4" height="4" rx=".5" stroke="currentColor" stroke-width="1.6"/>
-    </svg>
-  </button>
-  <button class="sb-btn" data-page="hash"      data-label="OpenHash 노드" onclick="navigate('hash',this)">
-    <svg viewBox="0 0 16 16" fill="none">
-      <polygon points="8,2 13.5,5 13.5,11 8,14 2.5,11 2.5,5"
-               stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-      <polygon points="8,5.5 11,7.2 11,10.8 8,12.5 5,10.8 5,7.2"
-               stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-    </svg>
-  </button>
-
-  <div class="sb-sep"></div>
-
-  <!-- 설정 (링크) -->
-  <div class="sb-spacer"></div>
-  <a href="https://github.com/Openhash-Gopang/security" target="_blank"
-     class="sb-btn" data-label="GitHub">
-    <svg viewBox="0 0 16 16" fill="currentColor">
-      <path d="M8 1C4.13 1 1 4.13 1 8c0 3.09 2 5.71 4.79 6.63.35.06.48-.15.48-.34
-               0-.17-.01-.73-.01-1.32-1.95.42-2.36-.94-2.36-.94-.32-.81-.78-1.02-.78-1.02
-               -.64-.44.05-.43.05-.43.7.05 1.07.72 1.07.72.62 1.07 1.63.76 2.03.58
-               .06-.45.24-.76.44-.93-1.55-.18-3.19-.78-3.19-3.46
-               0-.76.27-1.39.72-1.88-.07-.18-.31-.89.07-1.86
-               0 0 .59-.19 1.92.72A6.6 6.6 0 0 1 8 4.8c.6 0 1.2.08 1.76.23
-               1.33-.9 1.92-.72 1.92-.72.38.97.14 1.68.07 1.86
-               .45.49.72 1.12.72 1.88 0 2.69-1.64 3.28-3.2 3.45
-               .25.22.48.65.48 1.31 0 .95-.01 1.71-.01 1.94
-               0 .19.13.4.48.33A7.01 7.01 0 0 0 15 8c0-3.87-3.13-7-7-7z"/>
-    </svg>
-  </a>
-  <a href="https://gopang.net" class="sb-btn" data-label="고팡으로">
-    <svg viewBox="0 0 16 16" fill="none">
-      <path d="M10 3l4 5-4 5" stroke="currentColor" stroke-width="1.6"
-            stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M2 8h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-    </svg>
-  </a>
+  <div class="nav-right">
+    <a href="https://gopang.net" class="btn-nav btn-outline">← 고팡</a>
+    <a href="dashboard.html" class="btn-nav btn-outline">
+      <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
+        <rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/>
+        <rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/>
+        <rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/>
+        <rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/>
+      </svg>
+      대시보드
+    </a>
+    <button class="btn-nav btn-green" onclick="openWebApp()">
+      <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
+        <path d="M7 1.5L12 4.3V9C12 11.2 9.8 13 7 13.5C4.2 13 2 11.2 2 9V4.3L7 1.5Z"
+              stroke="white" stroke-width="1.3" stroke-linejoin="round"/>
+      </svg>
+      보안 상담
+    </button>
+  </div>
 </nav>
 
-<!-- ════ MAIN ════ -->
-<div class="layout">
-
-  <!-- 상단바 -->
-  <div class="topbar">
-    <div class="tb-breadcrumb">
-      <span>고팡</span>
-      <span class="sep">/</span>
-      <span id="tb-section">개요</span>
-      <span class="sep">/</span>
-      <span class="cur" id="tb-page">전체 현황</span>
-    </div>
-    <div class="tb-right">
-      <div class="tb-badge">
-        <div class="tb-pulse"></div>
-        <span>LIVE</span>
-      </div>
-      <span id="tb-clock"></span>
-      <a href="https://supabase.com/dashboard" target="_blank" class="tb-link">
-        <svg viewBox="0 0 12 12" fill="none">
-          <path d="M2 6h8M6 2v8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        </svg>
-        Supabase
-      </a>
-    </div>
+<!-- HERO -->
+<section class="hero dot-bg">
+  <a href="https://github.com/Openhash-Gopang/security" target="_blank" class="hero-eyebrow">
+    <span class="hero-dot"></span>
+    github.com/Openhash-Gopang/security
+  </a>
+  <h1>고팡 생태계<br><span class="brand">보안 인프라</span></h1>
+  <p class="hero-desc">
+    22개 하위 시스템의 해킹·오류 여부를 AI가 30초마다 감시합니다.<br>
+    모든 보안 현황은 숨김 없이 공개됩니다. 투명성이 신뢰의 근거입니다.
+  </p>
+  <div class="hero-actions">
+    <a href="dashboard.html" class="btn-lg green">
+      <svg viewBox="0 0 14 14" fill="none">
+        <rect x="1" y="1" width="5" height="5" rx="1" stroke="white" stroke-width="1.3"/>
+        <rect x="8" y="1" width="5" height="5" rx="1" stroke="white" stroke-width="1.3"/>
+        <rect x="1" y="8" width="5" height="5" rx="1" stroke="white" stroke-width="1.3"/>
+        <rect x="8" y="8" width="5" height="5" rx="1" stroke="white" stroke-width="1.3"/>
+      </svg>
+      실시간 대시보드
+    </a>
+    <button class="btn-lg outline" onclick="openWebApp()">
+      <svg viewBox="0 0 14 14" fill="none">
+        <path d="M7 1.5L12 4.3V9C12 11.2 9.8 13 7 13.5C4.2 13 2 11.2 2 9V4.3L7 1.5Z"
+              stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+      </svg>
+      AI 보안 상담
+    </button>
+    <a href="prompts/security_whitepaper.md" target="_blank" class="btn-lg outline">
+      <svg viewBox="0 0 14 14" fill="none">
+        <path d="M3 2h8v10H3V2zm2 2h4M5 7h4M5 9.5h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      백서 읽기
+    </a>
   </div>
 
-  <!-- 콘텐츠 -->
-  <div class="content">
+  <div class="kpi-strip">
+    <div class="kpi-item">
+      <div class="kpi-num" id="kpi-online">22<span class="unit">개</span></div>
+      <div class="kpi-lbl">감시 시스템</div>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-num">30<span class="unit">초</span></div>
+      <div class="kpi-lbl">점검 주기</div>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-num" id="kpi-events">—</div>
+      <div class="kpi-lbl">미해결 이벤트</div>
+    </div>
+    <div class="kpi-item">
+      <div class="kpi-num">2<span class="unit">단계</span></div>
+      <div class="kpi-lbl">AI 분석 엔진</div>
+    </div>
+  </div>
+</section>
 
-    <!-- ── 개요 ── -->
-    <div class="page active" id="page-overview">
-      <div class="page-hd">
-        <div class="page-title">전체 현황</div>
-        <div class="page-sub">고팡 생태계 22개 시스템 실시간 보안 모니터링</div>
-      </div>
+<!-- 작동 방식 -->
+<section class="section section-white" id="how">
+  <div class="section-inner">
+    <div class="section-tag">HOW IT WORKS</div>
+    <h2 class="section-title">이렇게 작동합니다</h2>
+    <p class="section-body">각 하위 시스템에 에이전트를 한 줄 추가하면, K-Security가 자동으로 감시를 시작합니다.</p>
 
-      <div class="kpi-row">
-        <div class="kpi-card">
-          <div class="kpi-label">온라인 시스템</div>
-          <div class="kpi-value" id="kpi-online">—<span class="unit"> / 22</span></div>
-          <div class="kpi-sub" id="kpi-online-sub">로딩 중…</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">평균 응답시간</div>
-          <div class="kpi-value" id="kpi-lat">—<span class="unit"> ms</span></div>
-          <div class="kpi-sub">최근 1시간</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">전체 업타임</div>
-          <div class="kpi-value" id="kpi-up">—<span class="unit"> %</span></div>
-          <div class="kpi-sub">최근 1시간 평균</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">미해결 이벤트</div>
-          <div class="kpi-value" id="kpi-ev">—</div>
-          <div class="kpi-sub" id="kpi-ev-sub">이상 없음</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">최근 보고</div>
-          <div class="kpi-value" style="font-size:17px" id="kpi-last">—</div>
-          <div class="kpi-sub">마지막 수신 시각</div>
+    <div class="steps">
+      <div class="step-row">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>에이전트 부착 — 단 한 줄</h4>
+          <p>각 하위 시스템의 <code>&lt;/body&gt;</code> 직전에 <code>security-agent.js</code>를 추가합니다. <code>data-svc</code>만 변경하면 22개 시스템 모두 동일하게 적용됩니다.</p>
         </div>
       </div>
-
-      <div class="sec-hd">
-        <span class="sec-title">시스템 상태</span>
-        <span class="sec-count" id="ov-count">—</span>
+      <div class="step-row">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>자가 진단 및 보고</h4>
+          <p>에이전트는 30초마다 응답시간, 인증 상태, PDV 흐름을 자가 진단하고 K-Security에 6하원칙 보고서를 전송합니다. 페이지 언로드 시에도 <code>sendBeacon</code>으로 마지막 보고를 전송합니다.</p>
+        </div>
       </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>시스템</th>
-              <th>URL</th>
-              <th>상태</th>
-              <th>응답시간</th>
-              <th>인증</th>
-              <th>PDV</th>
-              <th>최근 보고</th>
-            </tr>
-          </thead>
-          <tbody id="ov-tbody">
-            <tr><td colspan="7" class="empty">로딩 중…</td></tr>
-          </tbody>
-        </table>
+      <div class="step-row">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>AI 2단계 분석</h4>
+          <p>DeepSeek V3가 보고서를 1차 스크리닝하고, 의심 징후가 있으면 Claude Opus가 심층 분석합니다. 22개 공격 패턴과 대조하여 S1~S3 심각도를 판정합니다.</p>
+        </div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>이해관계자 알림 및 대응 지시</h4>
+          <p>이상 감지 시 해당 시스템 이해관계자에게 gopang 앱으로 긴급 메시지를 전송합니다. S3(위험) 수준에서는 K-Police 자동 연동과 시스템 <code>SUSPEND</code> 지시가 발동됩니다.</p>
+        </div>
       </div>
     </div>
 
-    <!-- ── 이벤트 ── -->
-    <div class="page" id="page-events">
-      <div class="page-hd">
-        <div class="page-title">보안 이벤트</div>
-        <div class="page-sub">미해결 이상 이벤트 목록 — 심각도순 정렬</div>
+    <div class="agent-block">
+      <pre><span class="cm">&lt;!-- 모든 하위 시스템 공통 — data-svc만 변경 --&gt;</span>
+<span class="kw">&lt;script</span>
+  <span class="at">src</span>=<span class="st">"https://security.gopang.net/security-agent.js"</span>
+  <span class="at">data-svc</span>=<span class="st">"school"</span>
+  <span class="at">data-url</span>=<span class="st">"school.gopang.net"</span>
+<span class="kw">&gt;&lt;/script&gt;</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- 핵심 기능 -->
+<section class="section" id="features">
+  <div class="section-inner">
+    <div class="section-tag">FEATURES</div>
+    <h2 class="section-title">핵심 기능</h2>
+    <div class="card-grid">
+      <div class="feature-card">
+        <div class="fc-icon">
+          <svg viewBox="0 0 18 18" fill="none">
+            <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M9 6v3.5l2 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3>상시 감시</h3>
+        <p>30초 간격으로 22개 시스템을 자동 점검합니다. 페이지 전환 시에도 백그라운드에서 계속 작동합니다.</p>
       </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>심각도</th>
-              <th>시스템</th>
-              <th>제목</th>
-              <th>상세</th>
-              <th>상태</th>
-              <th>발생 시각</th>
-            </tr>
-          </thead>
-          <tbody id="ev-tbody">
-            <tr><td colspan="6" class="empty">로딩 중…</td></tr>
-          </tbody>
-        </table>
+      <div class="feature-card">
+        <div class="fc-icon">
+          <svg viewBox="0 0 18 18" fill="none">
+            <path d="M3 9l4 4 8-8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>인증 통합</h3>
+        <p><code>subsystem-auth.js</code> v1.1에 통합되어 있습니다. 기존 인증 한 줄에 보안 에이전트가 자동으로 포함됩니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">
+          <svg viewBox="0 0 18 18" fill="none">
+            <polygon points="9,2 16,5.5 16,12.5 9,16 2,12.5 2,5.5" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>OpenHash 특별 감시</h3>
+        <p>해시체인 불일치, ILMV 검증 실패 1건만으로 즉시 S3 위험으로 판정합니다. 생태계 무결성의 최후 방어선입니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">
+          <svg viewBox="0 0 18 18" fill="none">
+            <rect x="2" y="2" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M6 9h6M9 6v6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3>완전 공개 투명성</h3>
+        <p>모든 보안 현황은 인증 없이 누구나 확인할 수 있습니다. 숨김으로써 보안을 달성하지 않습니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">
+          <svg viewBox="0 0 18 18" fill="none">
+            <path d="M9 2l2.5 5 5.5.8-4 3.9.9 5.5L9 14.5 4.1 17.2 5 11.7 1 7.8l5.5-.8z"
+                  stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>원격 지시 이행</h3>
+        <p>K-Security가 각 시스템에 <code>SUSPEND</code>, <code>SHOW_ALERT</code>, <code>RELOAD</code> 등 7가지 지시를 원격으로 발동합니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon">
+          <svg viewBox="0 0 18 18" fill="none">
+            <path d="M4 14l3-3m0 0l4-4m-4 4l-1-3m5 3l3 1m-3-1l4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3>K-Police 자동 연동</h3>
+        <p>S3 위험 수준 이상에서는 K-Police에 자동 통보합니다. 사이버 범죄 대응을 위한 증거 패키지를 자동 생성합니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AI 엔진 -->
+<section class="section section-white" id="ai">
+  <div class="section-inner">
+    <div class="section-tag">AI ENGINE</div>
+    <h2 class="section-title">2단계 AI 분석 파이프라인</h2>
+    <p class="section-body">빠른 스크리닝과 정확한 심층 분석을 분리하여 비용 효율과 탐지 정확도를 동시에 달성합니다.</p>
+
+    <div class="pipeline">
+      <div class="pipe-step">
+        <div class="ps-num">1</div>
+        <h4>보고 수신</h4>
+        <p>security-agent.js<br>30초 간격 보고</p>
+      </div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-step">
+        <div class="ps-num">2</div>
+        <h4>DeepSeek V3</h4>
+        <p>1차 스크리닝<br>이상 점수 0.0~1.0</p>
+      </div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-step">
+        <div class="ps-num">3</div>
+        <h4>Claude Opus</h4>
+        <p>점수 ≥0.6 시<br>심층 판정</p>
+      </div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-step">
+        <div class="ps-num">4</div>
+        <h4>Supabase 기록</h4>
+        <p>이벤트 저장<br>공개 대시보드 반영</p>
+      </div>
+      <div class="pipe-arr">→</div>
+      <div class="pipe-step">
+        <div class="ps-num">5</div>
+        <h4>알림·대응</h4>
+        <p>gopang 앱 전송<br>K-Police 연동</p>
       </div>
     </div>
 
-    <!-- ── 업타임 ── -->
-    <div class="page" id="page-uptime">
-      <div class="page-hd">
-        <div class="page-title">업타임 현황</div>
-        <div class="page-sub">최근 1시간 시스템별 가동률</div>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>시스템</th>
-              <th>업타임</th>
-              <th style="width:200px">그래프</th>
-              <th>평균 응답</th>
-              <th>최대 응답</th>
-              <th>총 점검 횟수</th>
-            </tr>
-          </thead>
-          <tbody id="up-tbody">
-            <tr><td colspan="6" class="empty">로딩 중…</td></tr>
-          </tbody>
-        </table>
+    <p style="margin-top:16px;font-size:13px;color:var(--text4)">
+      AI 판단 원칙: 증거 기반 · 과소 탐지보다 과다 탐지 · OpenHash 최우선 · DOUBLE_SPEND 즉시 S3
+    </p>
+  </div>
+</section>
+
+<!-- 심각도 -->
+<section class="section" id="severity">
+  <div class="section-inner">
+    <div class="section-tag">SEVERITY</div>
+    <h2 class="section-title">심각도 판정 기준</h2>
+    <p class="section-body">이상 징후 점수(0.0~1.0)와 공격 유형에 따라 S1~S3로 판정하며, 각 단계별 대응이 자동으로 실행됩니다.</p>
+
+    <table class="sev-table" style="margin-top:28px;background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">
+      <thead>
+        <tr>
+          <th>등급</th>
+          <th>이상 점수</th>
+          <th>상황</th>
+          <th>자동 대응</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="sev-badge sev-ok">OK</span></td>
+          <td style="font-family:'DM Mono',monospace;font-size:12px">0.0 ~ 0.4</td>
+          <td>정상 운영</td>
+          <td style="color:var(--text4)">없음</td>
+        </tr>
+        <tr>
+          <td><span class="sev-badge sev-s1">S1</span></td>
+          <td style="font-family:'DM Mono',monospace;font-size:12px">0.4 ~ 0.6</td>
+          <td>응답 지연, PDV 대기열 증가, 단발성 오류</td>
+          <td>운영자 gopang 앱 알림</td>
+        </tr>
+        <tr>
+          <td><span class="sev-badge sev-s2">S2</span></td>
+          <td style="font-family:'DM Mono',monospace;font-size:12px">0.6 ~ 0.85</td>
+          <td>연속 인증 실패, 프롬프트 인젝션 시도</td>
+          <td>긴급 알림 + 점검 간격 5초</td>
+        </tr>
+        <tr>
+          <td><span class="sev-badge sev-s3">S3</span></td>
+          <td style="font-family:'DM Mono',monospace;font-size:12px">0.85 ~</td>
+          <td>DOUBLE_SPEND, 해시체인 단절, SYBIL_ATTACK</td>
+          <td>전체 알림 + K-Police + SUSPEND</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 리소스 링크 -->
+<section class="section section-white" id="links">
+  <div class="section-inner">
+    <div class="section-tag">RESOURCES</div>
+    <h2 class="section-title">리소스 및 링크</h2>
+    <div class="link-grid">
+      <a href="dashboard.html" class="link-card">
+        <div class="lc-icon">
+          <svg viewBox="0 0 18 18" fill="none">
+            <rect x="2" y="2" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.4"/>
+            <rect x="10" y="2" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.4"/>
+            <rect x="2" y="10" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.4"/>
+            <rect x="10" y="10" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.4"/>
+          </svg>
+        </div>
+        <div class="lc-title">실시간 대시보드</div>
+        <div class="lc-desc">22개 시스템 보안 현황 · 공개 · 인증 불필요</div>
+        <div class="lc-arrow">열기 →</div>
+      </a>
+      <a href="prompts/security_whitepaper.md" target="_blank" class="link-card">
+        <div class="lc-icon">
+          <svg viewBox="0 0 18 18" fill="none">
+            <path d="M4 2h10v14H4V2zm2 3h6M6 8h6M6 11h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="lc-title">백서</div>
+        <div class="lc-desc">설계 철학 · 아키텍처 · 운영 원칙 전문</div>
+        <div class="lc-arrow">읽기 →</div>
+      </a>
+      <a href="prompts/security.md" target="_blank" class="link-card">
+        <div class="lc-icon">
+          <svg viewBox="0 0 18 18" fill="none">
+            <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M9 6v4l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="lc-title">AI 시스템 프롬프트</div>
+        <div class="lc-desc">LLM 감시 지침 · 이상 탐지 시그니처</div>
+        <div class="lc-arrow">읽기 →</div>
+      </a>
+      <a href="prompts/test-security.html" target="_blank" class="link-card">
+        <div class="lc-icon">
+          <svg viewBox="0 0 18 18" fill="none">
+            <path d="M5 3h8l2 4-5 8-5-8 2-4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+            <path d="M5 7h8" stroke="currentColor" stroke-width="1.4"/>
+          </svg>
+        </div>
+        <div class="lc-title">프롬프트 테스트</div>
+        <div class="lc-desc">6가지 시나리오로 AI 분석 테스트</div>
+        <div class="lc-arrow">실행 →</div>
+      </a>
+      <a href="https://github.com/Openhash-Gopang/security" target="_blank" class="link-card">
+        <div class="lc-icon">
+          <svg viewBox="0 0 18 18" fill="currentColor" color="var(--brand)">
+            <path d="M9 1C4.58 1 1 4.58 1 9c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
+                     0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-1.01-.09-.23-.48-.94-.82-1.13
+                     -.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66
+                     .07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95
+                     0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12
+                     0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27
+                     1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15
+                     0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48
+                     0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 17 9c0-4.42-3.58-8-8-8z"/>
+          </svg>
+        </div>
+        <div class="lc-title">GitHub</div>
+        <div class="lc-desc">Openhash-Gopang/security · GPL v3</div>
+        <div class="lc-arrow">보기 →</div>
+      </a>
+      <div class="link-card" onclick="openWebApp()" style="cursor:pointer">
+        <div class="lc-icon">
+          <svg viewBox="0 0 18 18" fill="none">
+            <path d="M9 1.5L14.5 4.5V10C14.5 13 12 15.5 9 16.5C6 15.5 3.5 13 3.5 10V4.5L9 1.5Z"
+                  stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="lc-title">AI 보안 상담</div>
+        <div class="lc-desc">모바일 webapp · gopang 연동</div>
+        <div class="lc-arrow">시작 →</div>
       </div>
     </div>
+  </div>
+</section>
 
-    <!-- ── 카테고리 페이지 (공통 구조) ── -->
-    <div class="page" id="page-core">
-      <div class="page-hd">
-        <div class="page-title">핵심 시스템</div>
-        <div class="page-sub">gopang · security · 공유 인프라</div>
+<!-- FOOTER -->
+<footer>
+  <div class="footer-l">
+    K-Security · 고팡 생태계 v4.2 · AI City Inc. · 제주특별자치도<br>
+    © 2026 Gopang Ecosystem — K-Security Team
+  </div>
+  <div class="footer-r">
+    <a href="https://gopang.net">고팡</a>
+    <a href="dashboard.html">대시보드</a>
+    <a href="prompts/security_whitepaper.md">백서</a>
+    <a href="https://github.com/Openhash-Gopang/security" target="_blank">GitHub</a>
+    <a href="https://supabase.com/dashboard" target="_blank">Supabase</a>
+  </div>
+</footer>
+
+<!-- 폰 목업 모달 -->
+<div id="webapp-modal">
+  <div id="phone-wrapper">
+    <button id="modal-close" onclick="closeWebApp()">✕</button>
+    <div id="phone-frame">
+      <div class="phone-top"><div class="phone-speaker"></div></div>
+      <div class="phone-btn-vol-up"></div>
+      <div class="phone-btn-vol-dn"></div>
+      <div class="phone-btn-power"></div>
+      <div class="phone-screen">
+        <iframe id="webapp-iframe" title="K-Security webapp"
+                allow="camera; microphone; clipboard-write"
+                loading="lazy"></iframe>
       </div>
-      <div class="tbl-wrap"><table><thead><tr>
-        <th>시스템</th><th>URL</th><th>상태</th><th>응답시간</th><th>최근 보고</th>
-      </tr></thead><tbody id="cat-tbody-core"></tbody></table></div>
+      <div class="phone-bottom"><div class="phone-home-bar"></div></div>
     </div>
-
-    <div class="page" id="page-safety">
-      <div class="page-hd">
-        <div class="page-title">안전·사법 시스템</div>
-        <div class="page-sub">K-Police · K-119 · K-Law</div>
-      </div>
-      <div class="tbl-wrap"><table><thead><tr>
-        <th>시스템</th><th>URL</th><th>상태</th><th>응답시간</th><th>최근 보고</th>
-      </tr></thead><tbody id="cat-tbody-safety"></tbody></table></div>
-    </div>
-
-    <div class="page" id="page-eco">
-      <div class="page-hd">
-        <div class="page-title">경제·금융 시스템</div>
-        <div class="page-sub">GDC · K-Tax · K-Stock · K-Insurance · K-Market</div>
-      </div>
-      <div class="tbl-wrap"><table><thead><tr>
-        <th>시스템</th><th>URL</th><th>상태</th><th>응답시간</th><th>최근 보고</th>
-      </tr></thead><tbody id="cat-tbody-eco"></tbody></table></div>
-    </div>
-
-    <div class="page" id="page-transport">
-      <div class="page-hd">
-        <div class="page-title">교통·물류 시스템</div>
-        <div class="page-sub">K-Traffic · K-Logistics</div>
-      </div>
-      <div class="tbl-wrap"><table><thead><tr>
-        <th>시스템</th><th>URL</th><th>상태</th><th>응답시간</th><th>최근 보고</th>
-      </tr></thead><tbody id="cat-tbody-transport"></tbody></table></div>
-    </div>
-
-    <div class="page" id="page-life">
-      <div class="page-hd">
-        <div class="page-title">의료·교육 시스템</div>
-        <div class="page-sub">K-Health · K-School</div>
-      </div>
-      <div class="tbl-wrap"><table><thead><tr>
-        <th>시스템</th><th>URL</th><th>상태</th><th>응답시간</th><th>최근 보고</th>
-      </tr></thead><tbody id="cat-tbody-life"></tbody></table></div>
-    </div>
-
-    <div class="page" id="page-gov">
-      <div class="page-hd">
-        <div class="page-title">공공·거버넌스 시스템</div>
-        <div class="page-sub">K-Public · K-Democracy</div>
-      </div>
-      <div class="tbl-wrap"><table><thead><tr>
-        <th>시스템</th><th>URL</th><th>상태</th><th>응답시간</th><th>최근 보고</th>
-      </tr></thead><tbody id="cat-tbody-gov"></tbody></table></div>
-    </div>
-
-    <div class="page" id="page-hash">
-      <div class="page-hd">
-        <div class="page-title">OpenHash 네트워크</div>
-        <div class="page-sub">L1 읍면동 → L2 시군구 → L3 광역 → L4 국가 → L5 글로벌</div>
-      </div>
-      <div class="tbl-wrap"><table><thead><tr>
-        <th>노드</th><th>계층</th><th>관할</th><th>상태</th><th>응답시간</th><th>최근 보고</th>
-      </tr></thead><tbody id="cat-tbody-hash"></tbody></table></div>
-    </div>
-
-  </div><!-- /content -->
-</div><!-- /layout -->
+  </div>
+  <div id="modal-label">
+    <span class="modal-dot"></span>
+    security.gopang.net/webapp.html
+  </div>
+</div>
 
 <script>
-// ── 설정 ────────────────────────────────────────────────────
+// ── KPI 로드 ──────────────────────────────────────────────
 const SUPA_URL  = 'https://ebbecjfrwaswbdybbgiu.supabase.co';
 const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViYmVjamZyd2Fzd2JkeWJiZ2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NjE5ODQsImV4cCI6MjA5NTEzNzk4NH0.H2ahQKtWdSke04Pdi3hDY86pdTx7UUKPUpQMlS_zciA';
 const HDR = { apikey: SUPA_ANON, Authorization: 'Bearer ' + SUPA_ANON };
 
-// ── 시스템 정의 ──────────────────────────────────────────────
-const SYSTEMS = [
-  { id:'gopang',               name:'고팡 메인',    url:'gopang.net',              cat:'core'      },
-  { id:'security',             name:'K-Security',   url:'security.gopang.net',     cat:'core'      },
-  { id:'gopang-proxy',         name:'gopang-proxy', url:'tensor-city.workers.dev', cat:'core'      },
-  { id:'police',               name:'K-Police',     url:'police.gopang.net',       cat:'safety'    },
-  { id:'911',                  name:'K-119',        url:'911.gopang.net',          cat:'safety'    },
-  { id:'klaw',                 name:'K-Law',        url:'klaw.gopang.net',         cat:'safety'    },
-  { id:'gdc',                  name:'GDC',          url:'gdc.gopang.net',          cat:'eco'       },
-  { id:'tax',                  name:'K-Tax',        url:'tax.gopang.net',          cat:'eco'       },
-  { id:'stock',                name:'K-Stock',      url:'stock.gopang.net',        cat:'eco'       },
-  { id:'insurance',            name:'K-Insurance',  url:'insurance.gopang.net',    cat:'eco'       },
-  { id:'market',               name:'K-Market',     url:'market.gopang.net',       cat:'eco'       },
-  { id:'traffic',              name:'K-Traffic',    url:'traffic.gopang.net',      cat:'transport' },
-  { id:'logistics',            name:'K-Logistics',  url:'logistics.gopang.net',    cat:'transport' },
-  { id:'health',               name:'K-Health',     url:'health.gopang.net',       cat:'life'      },
-  { id:'school',               name:'K-School',     url:'school.gopang.net',       cat:'life'      },
-  { id:'public',               name:'K-Public',     url:'public.gopang.net',       cat:'gov'       },
-  { id:'democracy',            name:'K-Democracy',  url:'democracy.gopang.net',    cat:'gov'       },
-  { id:'openhash-L1-ido1',     name:'OpenHash L1',  url:'L1 · 이도1동',            cat:'hash', tier:'L1', area:'제주시 이도1동' },
-  { id:'openhash-L2-jeju-city',name:'OpenHash L2',  url:'L2 · 제주시',             cat:'hash', tier:'L2', area:'제주시 전체'   },
-  { id:'openhash-L3-jeju',     name:'OpenHash L3',  url:'L3 · 제주도',             cat:'hash', tier:'L3', area:'제주특별자치도' },
-  { id:'openhash-L4-kr',       name:'OpenHash L4',  url:'L4 · 대한민국',           cat:'hash', tier:'L4', area:'대한민국'      },
-  { id:'openhash-L5-global',   name:'OpenHash L5',  url:'L5 · 글로벌',             cat:'hash', tier:'L5', area:'전 세계'       },
-];
-
-// ── 상태 캐시 ────────────────────────────────────────────────
-let _status = {}, _uptime = {}, _events = [];
-let _activePage = 'overview';
-
-// ── 네비게이션 ───────────────────────────────────────────────
-const PAGE_META = {
-  overview:  { section:'모니터링', page:'전체 현황' },
-  events:    { section:'모니터링', page:'보안 이벤트' },
-  uptime:    { section:'모니터링', page:'업타임 현황' },
-  core:      { section:'시스템', page:'핵심 시스템' },
-  safety:    { section:'시스템', page:'안전·사법' },
-  eco:       { section:'시스템', page:'경제·금융' },
-  transport: { section:'시스템', page:'교통·물류' },
-  life:      { section:'시스템', page:'의료·교육' },
-  gov:       { section:'시스템', page:'공공·거버넌스' },
-  hash:      { section:'시스템', page:'OpenHash 노드' },
-};
-
-function navigate(page, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  if (btn) btn.classList.add('active');
-  _activePage = page;
-  const m = PAGE_META[page] || {};
-  document.getElementById('tb-section').textContent = m.section || page;
-  document.getElementById('tb-page').textContent    = m.page    || page;
-  renderPage(page);
+async function loadKPI() {
+  try {
+    // 미해결 이벤트 수
+    const r = await fetch(
+      `${SUPA_URL}/rest/v1/security_open_events?select=id&limit=50`,
+      { headers: HDR }
+    );
+    if (r.status === 404) {
+      // 뷰 없으면 security_event 직접 조회
+      const r2 = await fetch(
+        `${SUPA_URL}/rest/v1/security_event?select=id&status=neq.resolved`,
+        { headers: HDR }
+      );
+      const rows = await r2.json().catch(()=>[]);
+      document.getElementById('kpi-events').textContent =
+        Array.isArray(rows) ? rows.length : '—';
+      return;
+    }
+    const rows = await r.json();
+    document.getElementById('kpi-events').textContent =
+      Array.isArray(rows) ? rows.length : '—';
+  } catch {}
 }
+loadKPI();
 
-// ── 유틸 ────────────────────────────────────────────────────
-function stBadge(status) {
-  const map = {
-    ok:      '<span class="st st-ok"><span class="st-dot"></span>정상</span>',
-    warn:    '<span class="st st-warn"><span class="st-dot"></span>경고</span>',
-    error:   '<span class="st st-error"><span class="st-dot"></span>오류</span>',
-    critical:'<span class="st st-error"><span class="st-dot"></span>위험</span>',
-    offline: '<span class="st st-offline"><span class="st-dot"></span>오프라인</span>',
-    pending: '<span class="st st-pending"><span class="st-dot"></span>대기</span>',
-  };
-  return map[status] || map.pending;
-}
-
-function latCell(ms) {
-  if (!ms) return '<span style="color:var(--txt4)">—</span>';
-  const cls = ms < 300 ? 'color:var(--green)' : ms < 1000 ? 'color:var(--yellow)' : 'color:var(--red)';
-  return `<span style="${cls};font-family:var(--mono);font-size:12px">${ms}ms</span>`;
-}
-
-function boolCell(val) {
-  return val
-    ? '<span style="color:var(--green);font-family:var(--mono);font-size:12px">✓</span>'
-    : '<span style="color:var(--red);font-family:var(--mono);font-size:12px">✗</span>';
-}
-
-function timeCell(iso) {
-  if (!iso) return '<span style="color:var(--txt4)">—</span>';
-  return `<span style="color:var(--txt3);font-family:var(--mono);font-size:11px">
-    ${new Date(iso).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>`;
-}
-
-function catRows(cat) {
-  return SYSTEMS.filter(s => s.cat === cat).map(sys => {
-    const s = _status[sys.id];
-    const st = s?.status || 'pending';
-    return `<tr>
-      <td class="td-name">${sys.name}</td>
-      <td class="td-mono" style="color:var(--txt3)">${sys.url}</td>
-      <td>${stBadge(st)}</td>
-      <td>${latCell(s?.latency_ms)}</td>
-      <td>${timeCell(s?.created_at)}</td>
-    </tr>`;
-  }).join('') || `<tr><td colspan="5" class="empty">데이터 없음</td></tr>`;
-}
-
-// ── 데이터 조회 ──────────────────────────────────────────────
-async function fetchAll() {
-  await Promise.all([
-    fetch(`${SUPA_URL}/rest/v1/security_status?select=*`, { headers: HDR })
-      .then(r => r.json()).then(rows => {
-        if (Array.isArray(rows)) rows.forEach(r => _status[r.svc] = r);
-      }).catch(()=>{}),
-    fetch(`${SUPA_URL}/rest/v1/security_uptime_1h?select=*`, { headers: HDR })
-      .then(r => r.json()).then(rows => {
-        if (Array.isArray(rows)) rows.forEach(r => _uptime[r.svc] = r);
-      }).catch(()=>{}),
-    fetch(`${SUPA_URL}/rest/v1/security_open_events?select=*&limit=50`, { headers: HDR })
-      .then(r => r.json()).then(rows => {
-        if (Array.isArray(rows)) _events = rows;
-      }).catch(()=>{}),
-  ]);
-}
-
-// ── KPI 갱신 ────────────────────────────────────────────────
-function updateKPI() {
-  const all     = SYSTEMS.map(s => _status[s.id]);
-  const rep     = all.filter(Boolean);
-  const online  = all.filter(s => s?.status === 'ok').length;
-  const issues  = all.filter(s => s && s.status !== 'ok' && s.status !== 'pending').length;
-
-  document.getElementById('kpi-online').innerHTML =
-    `${online}<span class="unit"> / ${SYSTEMS.length}</span>`;
-  document.getElementById('kpi-online-sub').textContent =
-    issues ? `⚠ ${issues}개 이상 감지` : '모든 시스템 정상';
-
-  const lats = rep.map(s => s.latency_ms).filter(Boolean);
-  const avgL = lats.length ? Math.round(lats.reduce((a,b)=>a+b)/lats.length) : null;
-  document.getElementById('kpi-lat').innerHTML =
-    avgL ? `${avgL}<span class="unit"> ms</span>` : `—<span class="unit"> ms</span>`;
-
-  const ups  = Object.values(_uptime).map(u => parseFloat(u.uptime_pct)).filter(Boolean);
-  const avgU = ups.length ? (ups.reduce((a,b)=>a+b)/ups.length).toFixed(1) : null;
-  document.getElementById('kpi-up').innerHTML =
-    avgU ? `${avgU}<span class="unit"> %</span>` : `—<span class="unit"> %</span>`;
-
-  document.getElementById('kpi-ev').textContent = _events.length || '0';
-  document.getElementById('kpi-ev-sub').textContent =
-    _events.length ? `S3: ${_events.filter(e=>e.severity==='S3').length}건` : '이상 없음';
-
-  const latest = rep.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0];
-  document.getElementById('kpi-last').textContent = latest
-    ? new Date(latest.created_at).toLocaleTimeString('ko-KR',
-        {hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '—';
-}
-
-// ── 페이지별 렌더링 ──────────────────────────────────────────
-function renderPage(page) {
-  if (page === 'overview') {
-    document.getElementById('ov-count').textContent = `${SYSTEMS.length}개 시스템`;
-    document.getElementById('ov-tbody').innerHTML = SYSTEMS.map(sys => {
-      const s  = _status[sys.id];
-      const st = s?.status || 'pending';
-      return `<tr>
-        <td class="td-name">${sys.name}</td>
-        <td class="td-mono" style="color:var(--txt3)">${sys.url}</td>
-        <td>${stBadge(st)}</td>
-        <td>${latCell(s?.latency_ms)}</td>
-        <td>${boolCell(s?.auth_ok)}</td>
-        <td>${boolCell(s?.pdv_ok)}</td>
-        <td>${timeCell(s?.created_at)}</td>
-      </tr>`;
-    }).join('');
-    updateKPI();
-  }
-
-  else if (page === 'events') {
-    document.getElementById('ev-tbody').innerHTML = _events.length
-      ? _events.map(ev => {
-          const sys = SYSTEMS.find(s => s.id === ev.svc);
-          const stMap = { open:'<span class="st st-error">미해결</span>',
-                          investigating:'<span class="st st-warn">조사중</span>',
-                          resolved:'<span class="st st-ok">해결</span>' };
-          return `<tr>
-            <td><span class="sev sev-${ev.severity}">${ev.severity}</span></td>
-            <td class="td-name">${sys?.name || ev.svc}</td>
-            <td>${ev.title}</td>
-            <td style="color:var(--txt3)">${ev.detail || '—'}</td>
-            <td>${stMap[ev.status] || ev.status}</td>
-            <td>${timeCell(ev.created_at)}</td>
-          </tr>`;
-        }).join('')
-      : `<tr><td colspan="6">
-           <div class="empty">
-             <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="12"
-               stroke="currentColor" stroke-width="1.6"/>
-               <path d="M12 16l3 3 5-5" stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round"/>
-             </svg>
-             미해결 이벤트 없음
-           </div>
-         </td></tr>`;
-  }
-
-  else if (page === 'uptime') {
-    document.getElementById('up-tbody').innerHTML = SYSTEMS.map(sys => {
-      const u   = _uptime[sys.id];
-      const pct = u ? parseFloat(u.uptime_pct) : null;
-      const cls = pct === null ? '' : pct >= 99 ? '' : pct >= 90 ? 'med' : 'low';
-      const pctColor = pct === null ? 'var(--txt4)'
-        : pct >= 99 ? 'var(--green)' : pct >= 90 ? 'var(--yellow)' : 'var(--red)';
-      return `<tr>
-        <td class="td-name">${sys.name}</td>
-        <td style="font-family:var(--mono);font-size:12px;color:${pctColor}">
-          ${pct !== null ? pct + '%' : '—'}</td>
-        <td>
-          <div class="ubar-track">
-            <div class="ubar-fill ${cls}" style="width:${pct||0}%"></div>
-          </div>
-        </td>
-        <td>${latCell(u?.avg_latency_ms)}</td>
-        <td style="font-family:var(--mono);font-size:12px;color:var(--txt3)">
-          ${u?.max_latency_ms ? u.max_latency_ms+'ms' : '—'}</td>
-        <td style="font-family:var(--mono);font-size:12px;color:var(--txt3)">
-          ${u?.total_checks || '—'}</td>
-      </tr>`;
-    }).join('');
-  }
-
-  else if (page === 'hash') {
-    document.getElementById('cat-tbody-hash').innerHTML =
-      SYSTEMS.filter(s => s.cat === 'hash').map(sys => {
-        const s  = _status[sys.id];
-        const st = s?.status || 'pending';
-        return `<tr>
-          <td class="td-name">${sys.name}</td>
-          <td style="font-family:var(--mono);font-size:12px;color:var(--blue)">${sys.tier}</td>
-          <td style="color:var(--txt3)">${sys.area}</td>
-          <td>${stBadge(st)}</td>
-          <td>${latCell(s?.latency_ms)}</td>
-          <td>${timeCell(s?.created_at)}</td>
-        </tr>`;
-      }).join('');
-  }
-
-  else {
-    // 카테고리 페이지
-    const tbody = document.getElementById('cat-tbody-' + page);
-    if (tbody) tbody.innerHTML = catRows(page);
+// ── webapp 모달 ───────────────────────────────────────────
+function openWebApp() {
+  const modal = document.getElementById('webapp-modal');
+  modal.classList.add('open');
+  const iframe = document.getElementById('webapp-iframe');
+  if (!iframe.src || iframe.src === 'about:blank') {
+    iframe.src = location.origin + '/webapp.html';
   }
 }
-
-// ── 시계 ────────────────────────────────────────────────────
-setInterval(() => {
-  document.getElementById('tb-clock').textContent =
-    new Date().toLocaleTimeString('ko-KR',
-      { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
-}, 1000);
-
-// ── 전체 갱신 ────────────────────────────────────────────────
-async function refresh() {
-  await fetchAll();
-  renderPage(_activePage);
+function closeWebApp() {
+  document.getElementById('webapp-modal').classList.remove('open');
 }
-
-// ── 초기화 ───────────────────────────────────────────────────
-renderPage('overview'); // 스켈레톤
-refresh();
-setInterval(refresh, 30000);
+document.getElementById('webapp-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('webapp-modal')) closeWebApp();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeWebApp();
+});
 </script>
 </body>
 </html>
