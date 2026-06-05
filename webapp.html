@@ -10,18 +10,19 @@
 *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
 html, body {
   height:100%; height:100dvh; overflow:hidden;
-  font-family:-apple-system,'Helvetica Neue',sans-serif;
-  font-size:15px; background:#f2f2f7; color:#1c1c1e;
+  font-family:'Samsung One','Noto Sans KR',-apple-system,sans-serif;
+  font-size:15px; background:#f4f4f7; color:#1a1a1a;
   -webkit-font-smoothing:antialiased;
 }
 :root {
-  --acc:     #1c1c1e;
-  --acc-lt:  #3a3a3c;
-  --bg:      #f2f2f7;
-  --sur:     #ffffff;
-  --sep:     #e5e5ea;
-  --txt2:    #8e8e93;
-  --blue:    #007aff;
+  --acc:      #1a73e8;   /* One UI 블루 */
+  --acc-dk:   #1557b0;
+  --bg:       #f4f4f7;
+  --sur:      #ffffff;
+  --sep:      #e8e8ec;
+  --txt2:     #888899;
+  --bubble-me:#1a73e8;   /* 내 말풍선 */
+  --bubble-ai:#ffffff;   /* AI 말풍선 */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bot: env(safe-area-inset-bottom, 0px);
 }
@@ -32,28 +33,49 @@ html, body {
 /* ── 상단바 ── */
 .topbar {
   display:flex; align-items:center;
-  padding:calc(var(--safe-top) + 10px) 16px 10px;
-  background:var(--sur); border-bottom:.5px solid var(--sep);
-  gap:10px; flex-shrink:0; min-height:52px;
+  padding:calc(var(--safe-top) + 10px) 14px 10px;
+  background:var(--sur); border-bottom:1px solid var(--sep);
+  gap:10px; flex-shrink:0; min-height:56px;
 }
 .back-btn {
-  background:none; border:none; color:var(--blue);
-  font-size:16px; cursor:pointer; padding:4px 0;
-  display:flex; align-items:center; gap:3px; flex-shrink:0;
+  background:none; border:none; color:var(--acc);
+  font-size:15px; cursor:pointer; padding:6px;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:50%; width:36px; height:36px; flex-shrink:0;
+  transition:background .12s;
 }
+.back-btn:active { background:#f0f0f0; }
 .back-btn svg {
-  width:9px; height:14px; stroke:var(--blue);
-  stroke-width:2.5; fill:none;
+  width:10px; height:16px; stroke:var(--acc);
+  stroke-width:2.2; fill:none;
   stroke-linecap:round; stroke-linejoin:round;
 }
-.topbar-center { flex:1; text-align:center; }
-.topbar-title  { font-size:16px; font-weight:600; }
+/* AI 아바타 */
+.topbar-av {
+  width:38px; height:38px; border-radius:50%;
+  background:linear-gradient(135deg,#1a73e8,#0d47a1);
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+.topbar-av svg { width:18px; height:18px; }
+.topbar-center { flex:1; min-width:0; }
+.topbar-title  { font-size:15px; font-weight:700; color:#1a1a1a; }
 .topbar-sub    { font-size:11px; color:var(--txt2); margin-top:1px; }
 .auth-badge {
-  background:#f2f2f7; color:var(--acc-lt);
-  border-radius:8px; padding:3px 8px;
-  font-size:11px; font-weight:600; flex-shrink:0;
+  background:#e8f0fd; color:var(--acc);
+  border-radius:10px; padding:3px 9px;
+  font-size:11px; font-weight:700; flex-shrink:0;
+  border:1px solid #c5d9f9;
 }
+/* 상단바 우측 메뉴 버튼 */
+.tb-more {
+  width:36px; height:36px; border-radius:50%;
+  background:none; border:none; cursor:pointer; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .12s;
+}
+.tb-more:active { background:#f0f0f0; }
+.tb-more svg { width:18px; height:18px; color:#555; }
 
 /* ── 채팅 ── */
 #chat-body {
@@ -65,35 +87,40 @@ html, body {
   text-align:center; font-size:12px; color:var(--txt2); padding:4px 0 6px;
 }
 .bubble-ai {
-  display:flex; align-items:flex-end; gap:8px;
-  max-width:88%; align-self:flex-start;
+  display:flex; align-items:flex-end; gap:7px;
+  max-width:82%; align-self:flex-start;
 }
 .ai-av {
-  width:28px; height:28px; border-radius:50%;
-  background:var(--acc); flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
+  width:30px; height:30px; border-radius:50%;
+  background:linear-gradient(135deg,#1a73e8,#0d47a1);
+  flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 1px 4px rgba(26,115,232,.3);
 }
 .ai-av svg { width:15px; height:15px; }
 .bubble-ai-txt {
-  background:var(--sur); border-radius:18px 18px 18px 4px;
-  padding:10px 14px; font-size:15px; line-height:1.5;
-  box-shadow:0 1px 2px rgba(0,0,0,.06); word-break:break-word;
+  background:var(--sur);
+  border-radius:4px 18px 18px 18px;
+  padding:10px 14px; font-size:14.5px; line-height:1.55;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);
+  word-break:break-word; color:#1a1a1a;
 }
 .bubble-ai-txt b { font-weight:600; }
 .bubble-ai-time {
-  font-size:10px; color:var(--txt2); margin-top:2px; padding-left:36px;
+  font-size:10px; color:var(--txt2); margin-top:3px; padding-left:37px;
 }
 .bubble-user {
   display:flex; flex-direction:column; align-items:flex-end;
-  max-width:88%; align-self:flex-end;
+  max-width:82%; align-self:flex-end;
 }
 .bubble-user-txt {
-  background:var(--acc); border-radius:18px 18px 4px 18px;
-  padding:10px 14px; font-size:15px; line-height:1.5;
+  background:var(--bubble-me);
+  border-radius:18px 4px 18px 18px;
+  padding:10px 14px; font-size:14.5px; line-height:1.55;
   color:#fff; word-break:break-word;
+  box-shadow:0 1px 3px rgba(26,115,232,.25);
 }
 .bubble-user-time {
-  font-size:10px; color:var(--txt2); margin-top:2px; text-align:right;
+  font-size:10px; color:var(--txt2); margin-top:3px; text-align:right;
 }
 .typing {
   display:flex; align-items:flex-end; gap:8px; align-self:flex-start;
@@ -103,7 +130,7 @@ html, body {
   display:flex; gap:5px; box-shadow:0 1px 2px rgba(0,0,0,.06);
 }
 .typing-dots span {
-  width:7px; height:7px; border-radius:50%; background:#c7c7cc;
+  width:7px; height:7px; border-radius:50%; background:#b0b0bb;
   animation:td 1.2s infinite;
 }
 .typing-dots span:nth-child(2){ animation-delay:.2s }
@@ -139,36 +166,62 @@ html, body {
 .chip {
   background:var(--sur); border:.5px solid var(--sep);
   border-radius:16px; padding:6px 14px;
-  font-size:13px; color:var(--blue);
+  font-size:13px; color:var(--acc);
   white-space:nowrap; cursor:pointer; flex-shrink:0;
 }
 .chip:active { background:#e8f0fe; }
 
-/* ── 입력 ── */
+/* ── 입력 영역 (Galaxy One UI) ── */
 .input-area {
-  background:var(--sur); border-top:.5px solid var(--sep);
-  padding:8px 12px calc(8px + var(--safe-bot));
-  display:flex; align-items:flex-end; gap:8px; flex-shrink:0;
+  background:var(--sur);
+  border-top:1px solid var(--sep);
+  padding:8px 10px calc(8px + var(--safe-bot));
+  display:flex; align-items:flex-end; gap:4px; flex-shrink:0;
 }
+/* 좌측 아이콘 버튼들 */
+.input-icon-btn {
+  width:38px; height:38px; border-radius:50%;
+  background:none; border:none; cursor:pointer; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  color:#666; transition:background .12s;
+}
+.input-icon-btn:active { background:#f0f0f0; }
+.input-icon-btn svg { width:22px; height:22px; }
+
+/* 입력창 래퍼 */
 .input-wrap {
-  flex:1; background:var(--bg); border:.5px solid var(--sep);
-  border-radius:20px; display:flex; align-items:flex-end; padding:6px 12px;
+  flex:1; background:var(--bg);
+  border:1.5px solid var(--sep);
+  border-radius:22px;
+  display:flex; align-items:flex-end;
+  padding:7px 12px 7px 14px;
+  transition:border-color .15s;
+  gap:6px;
 }
-.input-wrap:focus-within { border-color:#8e8e93; }
+.input-wrap:focus-within {
+  border-color:var(--acc);
+  background:#fff;
+}
 #msg-input {
   flex:1; background:none; border:none; outline:none;
-  font-family:inherit; font-size:15px; color:#1c1c1e;
-  resize:none; max-height:100px; line-height:1.4;
+  font-family:inherit; font-size:15px; color:#1a1a1a;
+  resize:none; max-height:120px; line-height:1.45;
+  padding:0;
 }
-#msg-input::placeholder { color:#c7c7cc; }
+#msg-input::placeholder { color:#b0b0bb; }
+
+/* 전송 버튼 */
 .send-btn {
-  width:34px; height:34px; border-radius:50%;
+  width:32px; height:32px; border-radius:50%;
   background:var(--acc); border:none; cursor:pointer; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
-  transition:opacity .15s;
+  transition:all .15s; align-self:flex-end;
 }
-.send-btn:disabled { background:#c7c7cc; cursor:not-allowed; }
+.send-btn:disabled {
+  background:#dde3ee; cursor:not-allowed;
+}
 .send-btn svg { width:15px; height:15px; fill:#fff; }
+.send-btn:not(:disabled):active { transform:scale(.9); background:var(--acc-dk); }
 
 /* ── 로딩 ── */
 #auth-loading {
@@ -194,15 +247,27 @@ html, body {
 <div id="app" style="display:none">
 
   <div class="topbar">
-    <button class="back-btn" onclick="goBack()">
-      <svg viewBox="0 0 9 14"><polyline points="8 1 1 7 8 13"/></svg>
-      고팡
+    <button class="back-btn" onclick="goBack()" title="뒤로">
+      <svg viewBox="0 0 10 16"><polyline points="9 1 1 8 9 15"/></svg>
     </button>
+    <div class="topbar-av">
+      <svg viewBox="0 0 18 18" fill="none">
+        <path d="M9 1.5L14 4.5V9.5C14 12 11.8 14.3 9 15C6.2 14.3 4 12 4 9.5V4.5L9 1.5Z"
+              stroke="white" stroke-width="1.4" stroke-linejoin="round"/>
+      </svg>
+    </div>
     <div class="topbar-center">
       <div class="topbar-title">K-Security</div>
-      <div class="topbar-sub" id="topbar-sub">고팡 생태계 보안</div>
+      <div class="topbar-sub" id="topbar-sub">온라인</div>
     </div>
     <span class="auth-badge" id="auth-badge">L0</span>
+    <button class="tb-more" title="더보기">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="12" cy="5"  r="1.5"/>
+        <circle cx="12" cy="12" r="1.5"/>
+        <circle cx="12" cy="19" r="1.5"/>
+      </svg>
+    </button>
   </div>
 
   <div id="chat-body"></div>
@@ -223,11 +288,45 @@ html, body {
   </div>
 
   <div class="input-area">
+    <!-- 마이크 -->
+    <button class="input-icon-btn" onclick="tapMic()" title="음성 입력">
+      <svg viewBox="0 0 24 24" fill="none">
+        <rect x="9" y="2" width="6" height="12" rx="3" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M5 11a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round"/>
+        <line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round"/>
+        <line x1="8" y1="22" x2="16" y2="22" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round"/>
+      </svg>
+    </button>
+    <!-- 입력창 -->
     <div class="input-wrap">
-      <textarea id="msg-input" rows="1" placeholder="보안 관련 질문을 입력하세요…"></textarea>
+      <textarea id="msg-input" rows="1" placeholder="메시지 입력…"></textarea>
+      <!-- 카메라 -->
+      <button class="input-icon-btn" style="width:28px;height:28px;color:#999" onclick="tapCamera()" title="카메라">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="1.7"/>
+        </svg>
+      </button>
+      <!-- 파일 첨부 -->
+      <button class="input-icon-btn" style="width:28px;height:28px;color:#999" onclick="tapAttach()" title="파일 첨부">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66
+                   l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"
+                stroke="currentColor" stroke-width="1.7"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </div>
+    <!-- 전송 -->
     <button class="send-btn" id="send-btn" disabled>
-      <svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M12 19V5M5 12l7-7 7 7" stroke="white" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     </button>
   </div>
 
@@ -463,6 +562,54 @@ function showWelcome() {
     msg += `고팡 생태계 22개 시스템의 보안 상태를\n질문하거나 이상 징후를 보고해 주세요.`;
   }
   appendAI(msg);
+}
+
+// ── 입력 아이콘 핸들러 ───────────────────────────────────
+function tapMic() {
+  // Web Speech API 지원 시 음성 입력
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    appendAI('이 기기에서는 음성 입력이 지원되지 않습니다.');
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SR();
+  rec.lang = 'ko-KR'; rec.interimResults = false; rec.maxAlternatives = 1;
+  rec.onresult = e => {
+    const inp = document.getElementById('msg-input');
+    inp.value = e.results[0][0].transcript;
+    inp.dispatchEvent(new Event('input'));
+  };
+  rec.onerror = () => appendAI('음성 인식에 실패했습니다. 다시 시도해 주세요.');
+  rec.start();
+}
+
+function tapCamera() {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment';
+  inp.onchange = e => {
+    const file = e.target.files[0];
+    if (file) appendAI(`📷 이미지 첨부됨: ${file.name} (텍스트 분석 기능은 준비 중입니다)`);
+  };
+  inp.click();
+}
+
+function tapAttach() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.pdf,.txt,.log,.json,.md,.csv';
+  inp.onchange = e => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const preview = ev.target.result.slice(0, 300);
+        send(`다음 파일을 분석해 주세요 (${file.name}):
+${preview}…`);
+      };
+      reader.readAsText(file);
+    }
+  };
+  inp.click();
 }
 
 // ── 인증 콜백 ─────────────────────────────────────────────
