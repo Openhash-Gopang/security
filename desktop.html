@@ -808,27 +808,36 @@ const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs
 const HDR = { apikey: SUPA_ANON, Authorization: 'Bearer ' + SUPA_ANON };
 
 async function loadKPI() {
+  // Supabase 뷰·테이블이 없을 수 있으므로 모든 오류를 무시하고
+  // 데이터가 있을 때만 KPI를 갱신합니다.
+  const el = document.getElementById('kpi-events');
+
+  // 1차: security_open_events 뷰
   try {
-    // 미해결 이벤트 수
     const r = await fetch(
       `${SUPA_URL}/rest/v1/security_open_events?select=id&limit=50`,
       { headers: HDR }
     );
-    if (r.status === 404) {
-      // 뷰 없으면 security_event 직접 조회
-      const r2 = await fetch(
-        `${SUPA_URL}/rest/v1/security_event?select=id&status=neq.resolved`,
-        { headers: HDR }
-      );
-      const rows = await r2.json().catch(()=>[]);
-      document.getElementById('kpi-events').textContent =
-        Array.isArray(rows) ? rows.length : '—';
-      return;
+    if (r.ok) {
+      const rows = await r.json();
+      if (Array.isArray(rows)) { el.textContent = rows.length; return; }
     }
-    const rows = await r.json();
-    document.getElementById('kpi-events').textContent =
-      Array.isArray(rows) ? rows.length : '—';
   } catch {}
+
+  // 2차: security_event 테이블 직접 조회
+  try {
+    const r2 = await fetch(
+      `${SUPA_URL}/rest/v1/security_event?select=id&status=neq.resolved`,
+      { headers: HDR }
+    );
+    if (r2.ok) {
+      const rows2 = await r2.json();
+      if (Array.isArray(rows2)) { el.textContent = rows2.length; return; }
+    }
+  } catch {}
+
+  // 두 곳 모두 없으면 0 표시 (DB 미생성 상태)
+  el.textContent = '0';
 }
 loadKPI();
 
@@ -850,6 +859,12 @@ document.getElementById('webapp-modal').addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeWebApp();
 });
+</script>
+
+<script
+  src="https://security.gopang.net/security-agent.js"
+  data-svc="security"
+  data-url="security.gopang.net">
 </script>
 </body>
 </html>
