@@ -799,7 +799,7 @@ async function fetchAll() {
           // 뷰 미생성 시: security_log에서 직접 집계
           const r2 = await fetch(
             `${SUPA_URL}/rest/v1/security_log?select=svc,svc_url,status,latency_ms,auth_ok,pdv_ok,err_streak,last_error,created_at&order=created_at.desc&limit=200`,
-            { headers: HDR }
+            { headers: { ...HDR, 'Cache-Control': 'max-age=240' } }
           );
           const rows2 = await r2.json();
           if (Array.isArray(rows2)) {
@@ -975,16 +975,40 @@ setInterval(() => {
       { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
 }, 1000);
 
-// ── 전체 갱신 ────────────────────────────────────────────────
+// ── 전체 갱신 (Egress 절약: 5분 간격 + 비활성 탭 중단 + 지수 백오프) ──
+let _refreshTimer  = null;
+let _failCount     = 0;
+const _BASE_INTERVAL = 5 * 60 * 1000;   // 5분 (기존 30초 → 10배 절감)
+const _MAX_INTERVAL  = 30 * 60 * 1000;  // 최대 30분 (실패 누적 시)
+
 async function refresh() {
-  await fetchAll();
-  renderPage(_activePage);
+  // 비활성 탭이면 건너뜀 (Egress 0)
+  if (document.hidden) return;
+  try {
+    await fetchAll();
+    renderPage(_activePage);
+    _failCount = 0;                       // 성공 시 실패 카운터 초기화
+  } catch(e) {
+    _failCount++;
+    console.warn('[Security Dashboard] fetch 실패 #' + _failCount, e.message);
+  }
+  // 다음 간격 계산: 실패할수록 2배씩 늘림 (지수 백오프)
+  const nextInterval = Math.min(_BASE_INTERVAL * Math.pow(2, _failCount), _MAX_INTERVAL);
+  clearTimeout(_refreshTimer);
+  _refreshTimer = setTimeout(refresh, nextInterval);
 }
+
+// 탭 활성화 시 즉시 갱신
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    clearTimeout(_refreshTimer);
+    refresh();
+  }
+});
 
 // ── 초기화 ───────────────────────────────────────────────────
 renderPage('overview'); // 스켈레톤
-refresh();
-setInterval(refresh, 30000);
+refresh();              // 첫 로드 즉시 실행, 이후 setTimeout으로 관리
 </script>
 <script
   src="https://security.gopang.net/security-agent.js"
