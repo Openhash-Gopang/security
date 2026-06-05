@@ -21,8 +21,11 @@
   const SVC_ID       = SCRIPT_EL?.dataset?.svc       || 'unknown';
   const SVC_URL      = SCRIPT_EL?.dataset?.url       || location.hostname;
   const AUTH_LEVEL   = SCRIPT_EL?.dataset?.authLevel || 'L0'; // subsystem-auth.js 전달값
-  const REPORT_URL   = 'https://gopang-proxy.tensor-city.workers.dev/security/report';
-  const COMMAND_URL  = 'https://gopang-proxy.tensor-city.workers.dev/security/command';
+  // Supabase 직접 저장 (gopang-proxy /security/report 배포 전까지)
+  const SUPA_URL   = 'https://ebbecjfrwaswbdybbgiu.supabase.co';
+  const SUPA_ANON  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViYmVjamZyd2Fzd2JkeWJiZ2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NjE5ODQsImV4cCI6MjA5NTEzNzk4NH0.H2ahQKtWdSke04Pdi3hDY86pdTx7UUKPUpQMlS_zciA';
+  const REPORT_URL  = SUPA_URL + '/rest/v1/security_log';
+  const COMMAND_URL = null; // gopang-proxy 배포 후 활성화
   const INTERVAL_SEC = 30;
   const STORE_KEY    = `ksec_agent_${SVC_ID}`;
 
@@ -118,22 +121,36 @@
       }));
     } catch {}
 
-    // 전송
+    // Supabase security_log 직접 저장
     try {
+      const row = {
+        svc:        payload.who.svc,
+        svc_url:    payload.who.url,
+        status:     payload.what.status,
+        latency_ms: payload.what.latency_ms,
+        auth_ok:    payload.what.auth_ok,
+        pdv_ok:     payload.what.pdv_ok,
+        err_streak: payload.what.err_streak,
+        last_error: payload.what.last_error,
+        uptime_sec: payload.when.uptime_sec,
+        raw:        payload,
+      };
       const res = await fetch(REPORT_URL, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ report: payload }),
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey':        SUPA_ANON,
+          'Authorization': 'Bearer ' + SUPA_ANON,
+          'Prefer':        'return=minimal',
+        },
+        body:      JSON.stringify(row),
         keepalive: true,
       });
-
-      if (res.ok) {
-        // K-Security의 지시가 응답에 포함될 수 있음
-        const data = await res.json().catch(() => ({}));
-        if (data.command) await executeCommand(data.command);
+      if (!res.ok) {
+        const txt = await res.text().catch(()=>'');
+        console.warn(`[K-Security Agent:${SVC_ID}] 저장 실패 ${res.status}:`, txt);
       }
     } catch (e) {
-      // 네트워크 실패 — 다음 주기에 재시도
       console.warn(`[K-Security Agent:${SVC_ID}] 보고 실패:`, e.message);
     }
 
@@ -251,7 +268,21 @@
                      last_error: 'page_unload',
                      uptime_sec: Math.floor((Date.now() - _startTime) / 1000) };
       const payload = buildReport(diag);
-      navigator.sendBeacon(REPORT_URL, JSON.stringify({ report: payload }));
+      const row = {
+        svc: payload.who.svc, svc_url: payload.who.url,
+        status: payload.what.status, latency_ms: payload.what.latency_ms,
+        auth_ok: payload.what.auth_ok, pdv_ok: payload.what.pdv_ok,
+        err_streak: payload.what.err_streak, last_error: payload.what.last_error,
+        uptime_sec: payload.when.uptime_sec, raw: payload,
+      };
+      // sendBeacon은 커스텀 헤더 불가 → fetch keepalive로 대체
+      fetch(REPORT_URL, {
+        method: 'POST', keepalive: true,
+        headers: { 'Content-Type': 'application/json',
+                   'apikey': SUPA_ANON, 'Authorization': 'Bearer ' + SUPA_ANON,
+                   'Prefer': 'return=minimal' },
+        body: JSON.stringify(row),
+      }).catch(()=>{});
     });
 
     console.info(`[K-Security Agent:${SVC_ID}] 시작 — ${SVC_URL} — 점검 간격 ${INTERVAL_SEC}s`);
