@@ -1,5 +1,5 @@
 // ── security-agent.js ────────────────────────────────────────
-// 고팡 생태계 하위 시스템 공통 보안 에이전트 v1.0
+// 고팡 생태계 하위 시스템 공통 보안 에이전트 v1.1
 //
 // 사용법: 각 하위 시스템의 </body> 직전에 추가
 //   <script
@@ -26,7 +26,7 @@
   const SUPA_ANON  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViYmVjamZyd2Fzd2JkeWJiZ2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NjE5ODQsImV4cCI6MjA5NTEzNzk4NH0.H2ahQKtWdSke04Pdi3hDY86pdTx7UUKPUpQMlS_zciA';
   const REPORT_URL  = SUPA_URL + '/rest/v1/security_log';
   const COMMAND_URL = null; // gopang-proxy 배포 후 활성화
-  const INTERVAL_SEC = 30;
+  const INTERVAL_SEC = 24 * 60 * 60; // v1.1: 24시간 (기존 30초)
   const STORE_KEY    = `ksec_agent_${SVC_ID}`;
 
   // ── 상태 ────────────────────────────────────────────────────
