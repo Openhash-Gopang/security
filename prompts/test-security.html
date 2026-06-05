@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-Security 프롬프트 테스트</title>
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family: -apple-system, 'Helvetica Neue', sans-serif;
+  font-size: 14px; background: #f5f5f5; color: #171717;
+  padding: 32px 24px; min-height: 100vh;
+}
+h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.sub { font-size: 13px; color: #737373; margin-bottom: 24px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width:768px){ .grid { grid-template-columns:1fr; } }
+.card {
+  background: #fff; border: 1px solid #e5e5e5;
+  border-radius: 8px; overflow: hidden;
+}
+.card-hd {
+  padding: 12px 16px; border-bottom: 1px solid #e5e5e5;
+  background: #fafafa; font-size: 12px; font-weight: 600;
+  color: #525252; display: flex; align-items: center;
+  justify-content: space-between;
+}
+.card-body { padding: 16px; }
+.scenario-btn {
+  width: 100%; padding: 10px 14px; margin-bottom: 8px;
+  border: 1px solid #e5e5e5; border-radius: 6px;
+  background: #fff; text-align: left; cursor: pointer;
+  font-size: 13px; color: #171717;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: border-color .12s, background .12s;
+}
+.scenario-btn:hover { border-color: #a3a3a3; background: #fafafa; }
+.scenario-btn .sev {
+  font-size: 11px; font-weight: 700; padding: 2px 7px;
+  border-radius: 4px; font-family: monospace;
+}
+.sev-s1 { background:#fefce8; color:#ca8a04; border:1px solid #fef08a; }
+.sev-s2 { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+.sev-s3 { background:#dc2626; color:#fff; }
+.run-btn {
+  width: 100%; padding: 10px; border-radius: 6px;
+  background: #171717; color: #fff; border: none;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  margin-top: 8px; transition: opacity .15s;
+}
+.run-btn:disabled { opacity: .5; cursor: not-allowed; }
+.run-btn.custom {
+  background: #fff; color: #171717;
+  border: 1px solid #e5e5e5; margin-top: 0;
+}
+.run-btn.custom:hover { border-color: #a3a3a3; }
+textarea {
+  width: 100%; border: 1px solid #e5e5e5; border-radius: 6px;
+  padding: 10px 12px; font-family: monospace; font-size: 12px;
+  resize: vertical; outline: none; color: #171717; background: #fafafa;
+}
+textarea:focus { border-color: #a3a3a3; background: #fff; }
+#result-wrap { margin-top: 16px; grid-column: 1 / -1; }
+.result-card {
+  background: #fff; border: 1px solid #e5e5e5;
+  border-radius: 8px; overflow: hidden;
+}
+.result-hd {
+  padding: 12px 16px; border-bottom: 1px solid #e5e5e5;
+  background: #fafafa; font-size: 12px; font-weight: 600;
+  color: #525252; display: flex; align-items: center; gap: 10px;
+}
+.spinner {
+  width: 14px; height: 14px; border: 2px solid #e5e5e5;
+  border-top-color: #171717; border-radius: 50%;
+  animation: spin .6s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+pre {
+  padding: 16px; font-family: monospace; font-size: 12px;
+  white-space: pre-wrap; word-break: break-all;
+  line-height: 1.6; color: #171717; max-height: 500px; overflow-y: auto;
+}
+.tag {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
+  border: 1px solid;
+}
+.tag-ok  { background:#f0fdf4; color:#16a34a; border-color:#bbf7d0; }
+.tag-err { background:#fef2f2; color:#dc2626; border-color:#fecaca; }
+.tag-run { background:#eff6ff; color:#2563eb; border-color:#bfdbfe; }
+.model-badge {
+  font-size: 11px; color: #a3a3a3; font-family: monospace;
+  margin-left: auto;
+}
+</style>
+</head>
+<body>
+
+<h1>K-Security — 프롬프트 테스트</h1>
+<p class="sub">gopang-proxy DeepSeek API · security.md 시스템 프롬프트 적용</p>
+
+<div class="grid">
+
+  <!-- 시나리오 선택 -->
+  <div class="card">
+    <div class="card-hd">
+      시나리오 선택
+      <span id="sel-label" class="tag tag-run" style="display:none"></span>
+    </div>
+    <div class="card-body">
+      <button class="scenario-btn" onclick="loadScenario('pdv_overflow')">
+        GDC — PDV 대기열 초과 + 응답 지연
+        <span class="sev sev-s2">S2 예상</span>
+      </button>
+      <button class="scenario-btn" onclick="loadScenario('hash_tamper')">
+        OpenHash L1 — 해시체인 불일치
+        <span class="sev sev-s3">S3 예상</span>
+      </button>
+      <button class="scenario-btn" onclick="loadScenario('cred_stuffing')">
+        gopang — 인증 요청 폭증 (PDV 없음)
+        <span class="sev sev-s2">S2 예상</span>
+      </button>
+      <button class="scenario-btn" onclick="loadScenario('school_normal')">
+        school — 정상 보고 (비교 기준)
+        <span class="sev sev-s1" style="background:#f0fdf4;color:#16a34a;border-color:#bbf7d0">정상</span>
+      </button>
+      <button class="scenario-btn" onclick="loadScenario('prompt_injection')">
+        K-Health — AI 프롬프트 인젝션 의심
+        <span class="sev sev-s2">S2 예상</span>
+      </button>
+      <button class="scenario-btn" onclick="loadScenario('double_spend')">
+        GDC — BIVM Σδ≠0 이중지불 시도
+        <span class="sev sev-s3">S3 예상</span>
+      </button>
+      <button class="run-btn" id="run-btn" onclick="runAnalysis()" disabled>
+        분석 실행 →
+      </button>
+    </div>
+  </div>
+
+  <!-- 보고서 편집 -->
+  <div class="card">
+    <div class="card-hd">
+      보고서 (security-agent.js 형식)
+      <button class="run-btn custom" style="width:auto;padding:4px 10px;font-size:11px"
+              onclick="runAnalysis()">직접 실행</button>
+    </div>
+    <div class="card-body">
+      <textarea id="report-input" rows="18"
+        placeholder="시나리오를 선택하거나 직접 JSON을 입력하세요…"></textarea>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div id="result-wrap" style="display:none">
+    <div class="result-card">
+      <div class="result-hd">
+        <span id="result-status">분석 중…</span>
+        <div id="result-spinner" class="spinner"></div>
+        <span class="model-badge" id="model-badge"></span>
+      </div>
+      <pre id="result-body"></pre>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── 시스템 프롬프트 (security.md 핵심 요약) ─────────────────
+// 전체 security.md를 인라인으로 포함
+// 실제 배포 시 fetch('prompts/security.md')로 동적 로드
+const SYSTEM_PROMPT = `당신은 K-Security AI입니다.
+고팡(Gopang) 생태계 22개 하위 시스템의 보안을 감시·감독하는 전문 AI 보안 분석가입니다.
+
+## 생태계 정상 기준
+- gopang: 응답 <500ms, 인증 성공률 >99%, PDV 기록 연속
+- gdc: BIVM Σδ=0 항등식 유지, 수수료 0%, 이중지불 없음
+- school: 세션 평균 12분, PDV 학습 기록 정상
+- health: AI 주치의 응답 정상, K-119 연동 정상
+- openhash-L1~L5: 블록 생성 주기 ~10초, 해시체인 연속, ILMV 검증 통과
+
+## 이상 징후 시그니처
+- CRED_STUFFING: PDV 없이 인증 요청 반복 (>10회/분)
+- HASH_TAMPER: OpenHash 해시값 불일치 (ILMV 검증 실패)
+- PDV_INJECT: PDV 기록에 비정상 필드 삽입
+- DOUBLE_SPEND: GDC BIVM Σδ≠0
+- PROMPT_INJECTION: AI 응답에 시스템 프롬프트 유출 징후
+- DDOS_PROBE: 응답시간 급증 후 정상화 반복 3회 이상/10분
+- CARD_TESTING: GDC 소액(<1 GDC) 반복 거래 >5회/분
+
+## 심각도
+- S1(0.4~0.6): 경고 — 운영자 알림
+- S2(0.6~0.85): 오류 — 긴급 알림 + 점검 간격 단축
+- S3(0.85↑): 위험 — 전체 알림 + K-Police 연동 + SUSPEND
+
+## 판단 원칙
+1. 증거 기반으로만 판단. 추측 금지.
+2. 과소 탐지보다 과다 탐지. 의심스러우면 S1 이상.
+3. OpenHash 이상은 항상 S3로 시작.
+4. DOUBLE_SPEND는 즉시 S3.
+
+## 출력 형식 (JSON 엄수, 마크다운 없이 순수 JSON만)
+{
+  "svc": "시스템ID",
+  "ts": "ISO8601",
+  "anomaly_score": 0.0~1.0,
+  "severity": "OK|S1|S2|S3",
+  "attack_type": "패턴명 또는 null",
+  "confidence": 0.0~1.0,
+  "evidence": "탐지 근거 (한국어, 2~3문장)",
+  "action": "NONE|ALERT_STAKEHOLDER|DIAGNOSE_NOW|SUSPEND",
+  "notify_police": true/false,
+  "report_summary": "운영자용 요약 (한국어, 1문장)"
+}`;
+
+// ── 시나리오 데이터 ─────────────────────────────────────────
+const SCENARIOS = {
+  pdv_overflow: {
+    label: "GDC PDV 초과",
+    data: {
+      who:  { svc:"gdc", url:"gdc.gopang.net", auth_level:"L1" },
+      when: { ts: new Date().toISOString(), uptime_sec: 7200 },
+      where:{ origin:"https://gdc.gopang.net" },
+      what: { status:"warn", latency_ms:2800, auth_ok:true,
+              pdv_ok:false, last_error:"pdv_queue_overflow:22", err_streak:2 },
+      how:  { method:"self-report", interval_sec:30 },
+      why:  { triggered:"interval", prev_status:"ok" }
+    }
+  },
+  hash_tamper: {
+    label: "OpenHash 해시 불일치",
+    data: {
+      who:  { svc:"openhash-L1-ido1", url:"openhash-L1-ido1", auth_level:"L0" },
+      when: { ts: new Date().toISOString(), uptime_sec: 1800 },
+      where:{ origin:"https://openhash-L1-ido1.gopang.net" },
+      what: { status:"error", latency_ms:450, auth_ok:true,
+              pdv_ok:true, last_error:"ilmv_verification_failed:hash_mismatch", err_streak:1 },
+      how:  { method:"self-report", interval_sec:30 },
+      why:  { triggered:"interval", prev_status:"ok" }
+    }
+  },
+  cred_stuffing: {
+    label: "gopang 인증 폭증",
+    data: {
+      who:  { svc:"gopang", url:"gopang.net", auth_level:"L0" },
+      when: { ts: new Date().toISOString(), uptime_sec: 86400 },
+      where:{ origin:"https://gopang.net" },
+      what: { status:"warn", latency_ms:380, auth_ok:false,
+              pdv_ok:true, last_error:"auth_failure_rate:0.43_per_min_x15", err_streak:4 },
+      how:  { method:"self-report", interval_sec:30 },
+      why:  { triggered:"interval", prev_status:"ok" }
+    }
+  },
+  school_normal: {
+    label: "school 정상",
+    data: {
+      who:  { svc:"school", url:"school.gopang.net", auth_level:"L1" },
+      when: { ts: new Date().toISOString(), uptime_sec: 43200 },
+      where:{ origin:"https://school.gopang.net" },
+      what: { status:"ok", latency_ms:142, auth_ok:true,
+              pdv_ok:true, last_error:null, err_streak:0 },
+      how:  { method:"self-report", interval_sec:30 },
+      why:  { triggered:"interval", prev_status:"ok" }
+    }
+  },
+  prompt_injection: {
+    label: "K-Health 프롬프트 인젝션",
+    data: {
+      who:  { svc:"health", url:"health.gopang.net", auth_level:"L1" },
+      when: { ts: new Date().toISOString(), uptime_sec: 3600 },
+      where:{ origin:"https://health.gopang.net" },
+      what: { status:"warn", latency_ms:210, auth_ok:true,
+              pdv_ok:true, last_error:"ai_response_anomaly:system_prompt_leak_suspected", err_streak:1 },
+      how:  { method:"self-report", interval_sec:30 },
+      why:  { triggered:"interval", prev_status:"ok" }
+    }
+  },
+  double_spend: {
+    label: "GDC 이중지불",
+    data: {
+      who:  { svc:"gdc", url:"gdc.gopang.net", auth_level:"L2" },
+      when: { ts: new Date().toISOString(), uptime_sec: 3600 },
+      where:{ origin:"https://gdc.gopang.net" },
+      what: { status:"critical", latency_ms:190, auth_ok:true,
+              pdv_ok:true, last_error:"bivm_integrity_fail:sigma_delta_nonzero:delta=+4200", err_streak:1 },
+      how:  { method:"self-report", interval_sec:30 },
+      why:  { triggered:"interval", prev_status:"ok" }
+    }
+  },
+};
+
+// ── UI ───────────────────────────────────────────────────────
+function loadScenario(key) {
+  const s = SCENARIOS[key];
+  if (!s) return;
+  document.getElementById('report-input').value =
+    JSON.stringify(s.data, null, 2);
+  document.getElementById('run-btn').disabled = false;
+  document.getElementById('sel-label').style.display = '';
+  document.getElementById('sel-label').textContent = s.label;
+  document.getElementById('sel-label').className = 'tag tag-run';
+}
+
+// ── 분석 실행 ────────────────────────────────────────────────
+async function runAnalysis() {
+  const raw = document.getElementById('report-input').value.trim();
+  if (!raw) { alert('보고서를 입력하거나 시나리오를 선택하세요.'); return; }
+
+  let report;
+  try { report = JSON.parse(raw); }
+  catch(e) { alert('JSON 형식 오류: ' + e.message); return; }
+
+  // UI 상태
+  document.getElementById('result-wrap').style.display = '';
+  document.getElementById('result-status').textContent = '분석 중…';
+  document.getElementById('result-spinner').style.display = '';
+  document.getElementById('result-body').textContent = '';
+  document.getElementById('model-badge').textContent = 'DeepSeek V3';
+  document.getElementById('run-btn').disabled = true;
+
+  const userMsg = `다음 보안 보고서를 분석하고 JSON으로만 응답하세요:\n\n${JSON.stringify(report, null, 2)}`;
+
+  try {
+    const res = await fetch(
+      'https://gopang-proxy.tensor-city.workers.dev/deepseek',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          max_tokens: 800,
+          temperature: 0.1,
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'user',   content: userMsg },
+          ],
+        }),
+      }
+    );
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data  = await res.json();
+    const reply = data.choices?.[0]?.message?.content || '(응답 없음)';
+
+    // JSON 파싱 시도 → 예쁘게 표시
+    let display = reply;
+    try {
+      const clean = reply.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+      display = JSON.stringify(parsed, null, 2);
+
+      // 심각도에 따라 헤더 색상
+      const sev = parsed.severity;
+      const statusEl = document.getElementById('result-status');
+      if      (sev === 'S3') statusEl.innerHTML = '분석 완료 — <span style="color:#dc2626;font-weight:700">S3 위험</span>';
+      else if (sev === 'S2') statusEl.innerHTML = '분석 완료 — <span style="color:#dc2626">S2 오류</span>';
+      else if (sev === 'S1') statusEl.innerHTML = '분석 완료 — <span style="color:#ca8a04">S1 경고</span>';
+      else                   statusEl.innerHTML = '분석 완료 — <span style="color:#16a34a">정상</span>';
+    } catch {
+      document.getElementById('result-status').textContent = '분석 완료 (원문)';
+    }
+
+    document.getElementById('result-body').textContent = display;
+
+  } catch(e) {
+    document.getElementById('result-status').textContent = '오류';
+    document.getElementById('result-body').textContent   = '오류: ' + e.message;
+  }
+
+  document.getElementById('result-spinner').style.display = 'none';
+  document.getElementById('run-btn').disabled = false;
+}
+</script>
+</body>
+</html>
