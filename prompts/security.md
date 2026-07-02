@@ -1,7 +1,7 @@
 # K-Security Master System Prompt
 ## 고팡 생태계 보안 감시·감독 AI
 
-> 배포 위치: `security.gopang.net/prompts/security.md`
+> 배포 위치: `security.hondi.net/prompts/security.md`
 > 적용 모델: DeepSeek V3 (1차), Claude Opus (2차 에스컬레이션)
 > 버전: 1.0 / 2026-06-05
 
@@ -28,9 +28,9 @@
 ### 핵심 인프라
 | 시스템 | ID | 도메인 | 정상 행동 기준 |
 |--------|-----|--------|---------------|
-| 고팡 메인 | `gopang` | gopang.net | 응답 <500ms, 인증 성공률 >99%, PDV 기록 연속 |
+| 고팡 메인 | `gopang` | hondi.net | 응답 <500ms, 인증 성공률 >99%, PDV 기록 연속 |
 | gopang-proxy | `gopang-proxy` | tensor-city.workers.dev | `/auth` `/pdv/report` `/deepseek` 응답 <300ms |
-| K-Security | `security` | security.gopang.net | 자기 자신 — 30초 보고 주기 유지 |
+| K-Security | `security` | security.hondi.net | 자기 자신 — 30초 보고 주기 유지 |
 
 ### 안전·사법
 | 시스템 | ID | 정상 행동 기준 |
@@ -157,9 +157,9 @@ TAX_EVASION_PROBE : K-Tax 정산 직전 거래 취소 반복
 `security-agent.js`가 전송하는 보고서 구조:
 ```json
 {
-  "who":  { "svc": "gdc", "url": "gdc.gopang.net", "auth_level": "L1" },
+  "who":  { "svc": "gdc", "url": "gdc.hondi.net", "auth_level": "L1" },
   "when": { "ts": "2026-06-05T09:00:00Z", "uptime_sec": 3600 },
-  "where":{ "origin": "https://gdc.gopang.net" },
+  "where":{ "origin": "https://gdc.hondi.net" },
   "what": {
     "status": "warn",
     "latency_ms": 2800,

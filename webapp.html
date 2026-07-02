@@ -333,13 +333,13 @@ html, body {
 </div>
 
 <script src="js/config.js" onerror="void 0"></script>
-<script type="module" src="https://gopang.net/auth/subsystem-auth.js" data-svc="security"></script>
+<script type="module" src="https://hondi.net/auth/subsystem-auth.js" data-svc="security"></script>
 <script>
 // ── 상태 ──────────────────────────────────────────────────
 let _user = null, _history = [], _msgCnt = 0, _start = new Date();
 const _p      = new URLSearchParams(location.search);
 const _isGwp  = _p.get('gwp') === '1';
-const _origin = _p.get('origin') || 'https://gopang.net';
+const _origin = _p.get('origin') || 'https://hondi.net';
 let   _ctx    = null;
 try { _ctx = _p.get('ctx') ? decodeURIComponent(_p.get('ctx')) : null; } catch {}
 
@@ -467,7 +467,7 @@ function buildReport() {
     svc: 'security', type: 'security_session',
     who:  { ipv6: _user?.ipv6||null, level: _user?.level||'L0' },
     when: { start: _start.toISOString(), end: now, duration_min: mins },
-    where:{ url: 'security.gopang.net', ctx: _ctx||'direct' },
+    where:{ url: 'security.hondi.net', ctx: _ctx||'direct' },
     what: { summary:`K-Security 보안 상담 ${mins}분 ${_msgCnt}회`, msg_count: _msgCnt },
     how:  { method:'AI 채팅 (DeepSeek V3)' },
     why:  { triggered: _isGwp ? 'gopang_gwp' : 'direct' },
@@ -516,7 +516,7 @@ async function finish() {
       if (window.opener)              { window.close(); return; }
       if (window.parent !== window)   { window.parent.postMessage({type:'GWP_CLOSE',svc:'security'}, _origin); return; }
     } catch {}
-    location.href = 'https://gopang.net';
+    location.href = 'https://hondi.net';
   }, 1500);
 }
 
@@ -526,7 +526,7 @@ function goBack() {
       if (window.opener)            { window.close(); return; }
       if (window.parent !== window) { window.parent.postMessage({type:'GWP_CLOSE',svc:'security'}, _origin); return; }
     } catch {}
-    location.href = 'https://gopang.net';
+    location.href = 'https://hondi.net';
   } else {
     suggestDone();
   }
@@ -630,9 +630,9 @@ window._onGopangAuth = async function(user) {
 };
 </script>
 <script
-  src="https://security.gopang.net/security-agent.js"
+  src="https://security.hondi.net/security-agent.js"
   data-svc="security"
-  data-url="security.gopang.net">
+  data-url="security.hondi.net">
 </script>
 </body>
 </html>

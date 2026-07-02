@@ -3,9 +3,9 @@
 //
 // 사용법: 각 하위 시스템의 </body> 직전에 추가
 //   <script
-//     src="https://security.gopang.net/security-agent.js"
+//     src="https://security.hondi.net/security-agent.js"
 //     data-svc="school"
-//     data-url="school.gopang.net"
+//     data-url="school.hondi.net"
 //   ></script>
 //
 // 이 파일이 하는 일:
@@ -245,7 +245,7 @@
     banner.innerHTML = `
       <span>${c.icon}</span>
       <span style="flex:1">[K-Security] ${message}</span>
-      <span style="font-size:10px;opacity:.6">security.gopang.net</span>
+      <span style="font-size:10px;opacity:.6">security.hondi.net</span>
     `;
     document.body.prepend(banner);
   }

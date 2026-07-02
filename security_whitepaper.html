@@ -397,7 +397,7 @@ footer a { color:var(--brand); text-decoration:none; }
       <div class="wp-meta">
         <span class="wp-meta-item"><strong>버전</strong> 1.0</span>
         <span class="wp-meta-item"><strong>기준</strong> 고팡 생태계 v4.2</span>
-        <span class="wp-meta-item"><strong>도메인</strong> security.gopang.net</span>
+        <span class="wp-meta-item"><strong>도메인</strong> security.hondi.net</span>
         <span class="wp-meta-item"><strong>발행</strong> 2026-06-05</span>
         <span class="wp-meta-item"><strong>저작</strong> AI City Inc. · 제주특별자치도</span>
       </div>
@@ -420,7 +420,7 @@ footer a { color:var(--brand); text-decoration:none; }
         </div>
         <div class="principle-card">
           <h4>원칙 2 — 독자 인증 구현 금지</h4>
-          <p>K-Security는 자체 인증 시스템을 운영하지 않는다. 모든 인증은 gopang.net이 전담한다. K-Security는 결과만 수신한다.</p>
+          <p>K-Security는 자체 인증 시스템을 운영하지 않는다. 모든 인증은 hondi.net이 전담한다. K-Security는 결과만 수신한다.</p>
         </div>
         <div class="principle-card">
           <h4>원칙 3 — 한 줄 추가 원칙</h4>
@@ -468,8 +468,8 @@ footer a { color:var(--brand); text-decoration:none; }
 
       <h4 class="sec-h4">핵심 인프라</h4>
       <div class="tbl-wrap"><table><thead><tr><th>시스템</th><th>ID</th><th>도메인</th><th>정상 행동 기준</th></tr></thead><tbody>
-        <tr><td>고팡 메인</td><td><code>gopang</code></td><td>gopang.net</td><td>응답 &lt;500ms, 인증 성공률 &gt;99%, PDV 기록 연속</td></tr>
-        <tr><td>K-Security</td><td><code>security</code></td><td>security.gopang.net</td><td>30초 보고 주기 유지</td></tr>
+        <tr><td>고팡 메인</td><td><code>gopang</code></td><td>hondi.net</td><td>응답 &lt;500ms, 인증 성공률 &gt;99%, PDV 기록 연속</td></tr>
+        <tr><td>K-Security</td><td><code>security</code></td><td>security.hondi.net</td><td>30초 보고 주기 유지</td></tr>
         <tr><td>gopang-proxy</td><td><code>gopang-proxy</code></td><td>tensor-city.workers.dev</td><td>/auth /pdv/report /deepseek 응답 &lt;300ms</td></tr>
       </tbody></table></div>
 
@@ -519,9 +519,9 @@ footer a { color:var(--brand); text-decoration:none; }
       <p>각 하위 시스템에 단 하나의 파일만 추가하면 보안 감시에 참여합니다. <code>data-svc</code>와 <code>data-url</code>만 변경하면 22개 시스템 모두 동일하게 적용됩니다.</p>
       <pre><code><span class="cm">&lt;!-- 각 하위 시스템 &lt;/body&gt; 직전 --&gt;</span>
 <span class="kw">&lt;script</span>
-  <span class="at">src</span>=<span class="st">"https://security.gopang.net/security-agent.js"</span>
+  <span class="at">src</span>=<span class="st">"https://security.hondi.net/security-agent.js"</span>
   <span class="at">data-svc</span>=<span class="st">"school"</span>
-  <span class="at">data-url</span>=<span class="st">"school.gopang.net"</span>
+  <span class="at">data-url</span>=<span class="st">"school.hondi.net"</span>
 <span class="kw">&gt;&lt;/script&gt;</span></code></pre>
 
       <h3 class="sec-h3">3.2 자가 진단 항목 (30초 주기)</h3>
@@ -533,9 +533,9 @@ footer a { color:var(--brand); text-decoration:none; }
 
       <h3 class="sec-h3">3.3 보고서 구조 (6하원칙)</h3>
       <pre><code>{
-  <span class="at">"who"</span>:  { <span class="at">"svc"</span>: <span class="st">"school"</span>, <span class="at">"url"</span>: <span class="st">"school.gopang.net"</span>, <span class="at">"auth_level"</span>: <span class="st">"L1"</span> },
+  <span class="at">"who"</span>:  { <span class="at">"svc"</span>: <span class="st">"school"</span>, <span class="at">"url"</span>: <span class="st">"school.hondi.net"</span>, <span class="at">"auth_level"</span>: <span class="st">"L1"</span> },
   <span class="at">"when"</span>: { <span class="at">"ts"</span>: <span class="st">"2026-06-05T09:00:00Z"</span>, <span class="at">"uptime_sec"</span>: <span class="nm">43200</span> },
-  <span class="at">"where"</span>:{ <span class="at">"origin"</span>: <span class="st">"https://school.gopang.net"</span> },
+  <span class="at">"where"</span>:{ <span class="at">"origin"</span>: <span class="st">"https://school.hondi.net"</span> },
   <span class="at">"what"</span>: { <span class="at">"status"</span>: <span class="st">"ok"</span>, <span class="at">"latency_ms"</span>: <span class="nm">142</span>,
             <span class="at">"auth_ok"</span>: <span class="nm">true</span>, <span class="at">"pdv_ok"</span>: <span class="nm">true</span>, <span class="at">"err_streak"</span>: <span class="nm">0</span> },
   <span class="at">"how"</span>:  { <span class="at">"method"</span>: <span class="st">"self-report"</span>, <span class="at">"interval_sec"</span>: <span class="nm">30</span> },
@@ -731,7 +731,7 @@ footer a { color:var(--brand); text-decoration:none; }
       <h2 class="sec-h2">인증 통합 — 한 줄 추가 원칙</h2>
       <pre><code><span class="cm">&lt;!-- 모든 하위 시스템 공통 — 이 한 줄이 인증 + 보안 에이전트 --&gt;</span>
 <span class="kw">&lt;script</span> <span class="at">type</span>=<span class="st">"module"</span>
-  <span class="at">src</span>=<span class="st">"https://gopang.net/auth/subsystem-auth.js"</span><span class="kw">&gt;&lt;/script&gt;</span></code></pre>
+  <span class="at">src</span>=<span class="st">"https://hondi.net/auth/subsystem-auth.js"</span><span class="kw">&gt;&lt;/script&gt;</span></code></pre>
 
       <div class="tbl-wrap"><table><thead><tr><th>레벨</th><th>인증 방법</th><th>K-Security 접근 범위</th></tr></thead><tbody>
         <tr><td><code>L0</code></td><td>기기 자동 인식</td><td>공개 대시보드 조회</td></tr>
@@ -767,7 +767,7 @@ footer a { color:var(--brand); text-decoration:none; }
       <div class="tree">
 security/
 │   .nojekyll
-│   CNAME                       <span class="tc">← security.gopang.net</span>
+│   CNAME                       <span class="tc">← security.hondi.net</span>
 │   <span class="tf">index.html</span>                  <span class="tc">← 라우터 (모바일→webapp / PC→desktop)</span>
 │   <span class="tf">desktop.html</span>                <span class="tc">← 랜딩 페이지 (소개·링크)</span>
 │   <span class="fh">dashboard.html</span>              <span class="tc">← 실시간 보안 대시보드</span>
@@ -811,7 +811,7 @@ security/
   K-Security 백서 v1.0 · © 2026 Gopang Ecosystem · AI City Inc.<br>
   <a href="index.html">홈</a> · <a href="dashboard.html">대시보드</a> ·
   <a href="https://github.com/Openhash-Gopang/security" target="_blank">GitHub</a> ·
-  <a href="https://gopang.net">고팡</a>
+  <a href="https://hondi.net">고팡</a>
 </footer>
 
 <script>
@@ -831,9 +831,9 @@ sections.forEach(s => obs.observe(s));
 </script>
 
 <script
-  src="https://security.gopang.net/security-agent.js"
+  src="https://security.hondi.net/security-agent.js"
   data-svc="security"
-  data-url="security.gopang.net">
+  data-url="security.hondi.net">
 </script>
 </body>
 </html>

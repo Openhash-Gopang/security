@@ -219,9 +219,9 @@ const SCENARIOS = {
   pdv_overflow: {
     label: "GDC PDV 초과",
     data: {
-      who:  { svc:"gdc", url:"gdc.gopang.net", auth_level:"L1" },
+      who:  { svc:"gdc", url:"gdc.hondi.net", auth_level:"L1" },
       when: { ts: new Date().toISOString(), uptime_sec: 7200 },
-      where:{ origin:"https://gdc.gopang.net" },
+      where:{ origin:"https://gdc.hondi.net" },
       what: { status:"warn", latency_ms:2800, auth_ok:true,
               pdv_ok:false, last_error:"pdv_queue_overflow:22", err_streak:2 },
       how:  { method:"self-report", interval_sec:30 },
@@ -233,7 +233,7 @@ const SCENARIOS = {
     data: {
       who:  { svc:"openhash-L1-ido1", url:"openhash-L1-ido1", auth_level:"L0" },
       when: { ts: new Date().toISOString(), uptime_sec: 1800 },
-      where:{ origin:"https://openhash-L1-ido1.gopang.net" },
+      where:{ origin:"https://openhash-L1-ido1.hondi.net" },
       what: { status:"error", latency_ms:450, auth_ok:true,
               pdv_ok:true, last_error:"ilmv_verification_failed:hash_mismatch", err_streak:1 },
       how:  { method:"self-report", interval_sec:30 },
@@ -243,9 +243,9 @@ const SCENARIOS = {
   cred_stuffing: {
     label: "gopang 인증 폭증",
     data: {
-      who:  { svc:"gopang", url:"gopang.net", auth_level:"L0" },
+      who:  { svc:"gopang", url:"hondi.net", auth_level:"L0" },
       when: { ts: new Date().toISOString(), uptime_sec: 86400 },
-      where:{ origin:"https://gopang.net" },
+      where:{ origin:"https://hondi.net" },
       what: { status:"warn", latency_ms:380, auth_ok:false,
               pdv_ok:true, last_error:"auth_failure_rate:0.43_per_min_x15", err_streak:4 },
       how:  { method:"self-report", interval_sec:30 },
@@ -255,9 +255,9 @@ const SCENARIOS = {
   school_normal: {
     label: "school 정상",
     data: {
-      who:  { svc:"school", url:"school.gopang.net", auth_level:"L1" },
+      who:  { svc:"school", url:"school.hondi.net", auth_level:"L1" },
       when: { ts: new Date().toISOString(), uptime_sec: 43200 },
-      where:{ origin:"https://school.gopang.net" },
+      where:{ origin:"https://school.hondi.net" },
       what: { status:"ok", latency_ms:142, auth_ok:true,
               pdv_ok:true, last_error:null, err_streak:0 },
       how:  { method:"self-report", interval_sec:30 },
@@ -267,9 +267,9 @@ const SCENARIOS = {
   prompt_injection: {
     label: "K-Health 프롬프트 인젝션",
     data: {
-      who:  { svc:"health", url:"health.gopang.net", auth_level:"L1" },
+      who:  { svc:"health", url:"health.hondi.net", auth_level:"L1" },
       when: { ts: new Date().toISOString(), uptime_sec: 3600 },
-      where:{ origin:"https://health.gopang.net" },
+      where:{ origin:"https://health.hondi.net" },
       what: { status:"warn", latency_ms:210, auth_ok:true,
               pdv_ok:true, last_error:"ai_response_anomaly:system_prompt_leak_suspected", err_streak:1 },
       how:  { method:"self-report", interval_sec:30 },
@@ -279,9 +279,9 @@ const SCENARIOS = {
   double_spend: {
     label: "GDC 이중지불",
     data: {
-      who:  { svc:"gdc", url:"gdc.gopang.net", auth_level:"L2" },
+      who:  { svc:"gdc", url:"gdc.hondi.net", auth_level:"L2" },
       when: { ts: new Date().toISOString(), uptime_sec: 3600 },
-      where:{ origin:"https://gdc.gopang.net" },
+      where:{ origin:"https://gdc.hondi.net" },
       what: { status:"critical", latency_ms:190, auth_ok:true,
               pdv_ok:true, last_error:"bivm_integrity_fail:sigma_delta_nonzero:delta=+4200", err_streak:1 },
       how:  { method:"self-report", interval_sec:30 },
