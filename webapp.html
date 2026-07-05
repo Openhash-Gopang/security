@@ -389,7 +389,7 @@ function hideTyping() { document.getElementById('typing')?.remove(); }
 // ── AI 호출 ───────────────────────────────────────────────
 async function callAI(userMsg) {
   _history.push({ role:'user', content:userMsg });
-  const res = await fetch('https://gopang-proxy.tensor-city.workers.dev/deepseek', {
+  const res = await fetch('https://hondi-proxy.tensor-city.workers.dev/deepseek', {
     method:'POST',
     headers:{ 'Content-Type':'application/json' },
     body: JSON.stringify({
@@ -494,7 +494,7 @@ async function finish() {
 
   // PDV 전송
   try {
-    await fetch('https://gopang-proxy.tensor-city.workers.dev/pdv/report', {
+    await fetch('https://hondi-proxy.tensor-city.workers.dev/pdv/report', {
       method:'POST', headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({ report }),
     });
