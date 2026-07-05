@@ -394,6 +394,7 @@ async function callAI(userMsg) {
     headers:{ 'Content-Type':'application/json' },
     body: JSON.stringify({
       model:'deepseek-chat', max_tokens:600, temperature:0.4,
+      service_id: 'ksecurity', // 2026-07-05: worker.js가 UNIVERSAL 레이어 강제 주입
       messages:[
         { role:'system', content:`당신은 K-Security AI입니다.
 고팡 생태계(gopang, school, health, traffic, gdc, klaw, police, 911, tax, stock,
