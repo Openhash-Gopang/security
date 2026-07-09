@@ -1,6 +1,7 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
+    <script src="/gopang-wallet.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -511,6 +512,25 @@ async function finish() {
     else if (window.parent !== window) window.parent.postMessage(payload, _origin);
   } catch {}
 
+  // ── 실제 GWP_DONE 보고(2026-07-10 신설) ──────────────────────
+  // 위 GWP_SESSION_COMPLETE는 engine.js가 처리하는 타입이 아니라서
+  // (case 'GWP_DONE':만 존재) 지금까지 AI 비서에게 아무 것도 전달되지
+  // 않고 있었다(stock 저장소와 동일한 문제). window.opener가 있을 때만
+  // (=GWP 새 탭 경유) 의미가 있어 그 경우에만 발신한다.
+  if (window.opener) {
+    import('https://hondi.net/src/gopang/gwp/gwp-report-client.js')
+      .then(({ reportGwpSessionEnd }) => reportGwpSessionEnd({
+        agencyId: 'security',
+        guid: _user?.ipv6 || 'anonymous',
+        messages: _history,
+        resultText: report?.what?.summary || '',
+        summaryLine: report?.what?.summary || 'K-Security 보안 상담 완료',
+        gwpMode: _isGwp,
+        gwpOrigin: _origin,
+      }))
+      .catch(() => {});
+  }
+
   // 1.5초 후 닫기
   setTimeout(() => {
     try {
@@ -637,3 +657,4 @@ window._onGopangAuth = async function(user) {
 </script>
 </body>
 </html>
+
