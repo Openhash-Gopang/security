@@ -160,8 +160,112 @@
     );
   }
 
-  // ── K-Security 지시 수신 및 이행 ─────────────────────────────
-  async function executeCommand(cmd) {
+  // ── K-Security 명령 서명 검증 (2026-07-18 재설계) ─────────────
+  // COMMAND_URL이 아직 null이라 지금은 어떤 경로로도 실제로 호출되지
+  // 않는다(_pollCommands는 스캐폴딩일 뿐 어디서도 부르지 않음). 다만
+  // "COMMAND_URL을 켜는 순간 이 검증도 같이 있어야 한다"는 게 지난
+  // 세션 결론이라, 활성화 이전인 지금 미리 구현해둔다.
+  //
+  // 신뢰 모델이 gopang worker.js의 _verifyClaimsRequester와 다르다는
+  // 점이 핵심이다 — 그쪽은 "요청자 1명"을 매번 L1에서 조회해 검증하는
+  // 모델(사용자마다 공개키가 다름)이고, 여기는 "발신자(K-Security 서버)
+  // 단 하나"만 검증하면 되는 모델이다. 이 스크립트는 여러 하위 시스템의
+  // 브라우저에 그대로 배포되는 "받는 쪽"이라 대칭키/비밀값을 안전하게
+  // 들고 있을 수 없다 — 그래서 K-Security의 공개키 하나만 이 파일에
+  // 고정 배포(pin)하고, 서명에 쓰는 개인키는 K-Security 서버에만
+  // 존재한다. 소프트웨어 업데이트 서명(TUF 등)과 같은 구조다.
+  //
+  // ⚠️ 아래 공개키는 플레이스홀더다 — 실제 K-Security 서버가 갖추는
+  // 개인키와 짝이 맞는 진짜 키로 반드시 교체해야 한다. 짝이 안 맞으면
+  // 모든 서명 검증이 항상 실패한다(안전한 방향의 실패 — 명령이 전혀
+  // 실행되지 않을 뿐, 위조된 명령이 통과하지는 않는다).
+  const K_SECURITY_PUBLIC_KEY_B64U = 'PvNb36dACs6kHUKJRW89muIta7wmsX56HMez8F2z2F0';
+  const COMMAND_FRESHNESS_SEC = 300; // 5분 — 이보다 오래된 서명은 재생(replay) 공격으로 간주해 거부
+  const KNOWN_COMMAND_TYPES = Object.freeze([
+    'DIAGNOSE_NOW', 'SET_INTERVAL', 'SHOW_ALERT', 'HIDE_ALERT', 'SUSPEND', 'RESUME',
+  ]);
+
+  function _b64uToBytes(b64u) {
+    const b64 = b64u.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - b64u.length % 4) % 4);
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  // 서명 대상 메시지는 명령의 모든 필드를 결정적 순서로 직렬화한다.
+  // svc_id를 반드시 포함해야 "다른 서비스용으로 서명된 명령을 이 서비스에
+  // 재생"하는 공격(cross-service replay)을 막을 수 있다.
+  function _commandSigningMessage({ svc_id, type, params, ts }) {
+    return `ksec-command:${svc_id}:${type}:${JSON.stringify(params || {})}:${ts}`;
+  }
+
+  /**
+   * 서명된 명령을 검증 후에만 실행한다. 아래 4가지 중 하나라도 실패하면
+   * 명령을 절대 실행하지 않는다:
+   *   1. Ed25519 서명이 K_SECURITY_PUBLIC_KEY_B64U로 검증되는가
+   *   2. signedCmd.svc_id가 이 스크립트가 실행 중인 서비스(SVC_ID)와 일치하는가
+   *   3. ts(발급 시각)가 신선한가(COMMAND_FRESHNESS_SEC 이내)
+   *   4. type이 KNOWN_COMMAND_TYPES 화이트리스트 안에 있는가
+   */
+  async function receiveSignedCommand(signedCmd) {
+    const { svc_id, type, params, ts, signature } = signedCmd || {};
+
+    if (!svc_id || !type || !ts || !signature) {
+      console.warn(`[K-Security Agent:${SVC_ID}] 명령 거부: 필드 누락`);
+      return { accepted: false, reason: 'MISSING_FIELD' };
+    }
+    if (svc_id !== SVC_ID) {
+      console.warn(`[K-Security Agent:${SVC_ID}] 명령 거부: svc_id 불일치(${svc_id})`);
+      return { accepted: false, reason: 'SVC_MISMATCH' };
+    }
+    if (!KNOWN_COMMAND_TYPES.includes(type)) {
+      console.warn(`[K-Security Agent:${SVC_ID}] 명령 거부: 알 수 없는 타입(${type})`);
+      return { accepted: false, reason: 'UNKNOWN_TYPE' };
+    }
+    const ageSec = Math.abs(Date.now() / 1000 - Number(ts));
+    if (!(ageSec <= COMMAND_FRESHNESS_SEC)) {
+      console.warn(`[K-Security Agent:${SVC_ID}] 명령 거부: 오래된 서명(${Math.round(ageSec)}s)`);
+      return { accepted: false, reason: 'STALE_SIGNATURE' };
+    }
+
+    let sigOk = false;
+    try {
+      const key = await crypto.subtle.importKey(
+        'raw', _b64uToBytes(K_SECURITY_PUBLIC_KEY_B64U), { name: 'Ed25519' }, false, ['verify']
+      );
+      const msg = _commandSigningMessage({ svc_id, type, params, ts });
+      sigOk = await crypto.subtle.verify('Ed25519', key, _b64uToBytes(signature), new TextEncoder().encode(msg));
+    } catch (e) {
+      console.warn(`[K-Security Agent:${SVC_ID}] 서명 검증 오류:`, e.message);
+      sigOk = false;
+    }
+    if (!sigOk) {
+      console.warn(`[K-Security Agent:${SVC_ID}] 명령 거부: 서명 검증 실패`);
+      return { accepted: false, reason: 'BAD_SIGNATURE' };
+    }
+
+    await _executeCommandUnsafe({ type, ...params });
+    return { accepted: true };
+  }
+
+  // COMMAND_URL 활성화 시 이 함수가 주기적으로 폴링하도록 연결할 것.
+  // 지금은 COMMAND_URL이 null이라 어디서도 호출되지 않는 스캐폴딩이다.
+  async function _pollCommands() {
+    if (!COMMAND_URL) return;
+    try {
+      const res = await fetch(`${COMMAND_URL}?svc_id=${encodeURIComponent(SVC_ID)}`);
+      const data = await res.json().catch(() => null);
+      for (const signedCmd of (data?.commands || [])) {
+        await receiveSignedCommand(signedCmd);
+      }
+    } catch (e) {
+      console.warn(`[K-Security Agent:${SVC_ID}] 명령 폴링 실패:`, e.message);
+    }
+  }
+
+  // ── K-Security 지시 이행 (내부 전용 — 서명 검증을 통과한 뒤에만 호출) ─
+  async function _executeCommandUnsafe(cmd) {
     console.info(`[K-Security Agent:${SVC_ID}] 지시 수신:`, cmd.type);
 
     switch (cmd.type) {
@@ -295,7 +399,12 @@
     start();
   }
 
-  // 외부 접근용 (다른 스크립트에서 수동 보고 트리거 가능)
-  window.KSecAgent = { report, executeCommand, diagnose };
+  // 외부 접근용 (다른 스크립트에서 수동 보고 트리거 가능) — 2026-07-18:
+  // executeCommand(→ _executeCommandUnsafe로 개명, 비공개)는 여기서
+  // 뺐다. report/diagnose는 부작용이 읽기·보고뿐이라 외부에서 불러도
+  // 안전하다. receiveSignedCommand는 노출해도 안전하다 — 서명 검증을
+  // 통과하지 못하면 절대 실행하지 않도록 설계했으므로, 유효한
+  // K-Security 서명 없이 아무나 호출해봤자 항상 거부된다.
+  window.KSecAgent = { report, diagnose, receiveSignedCommand };
 
 })();
