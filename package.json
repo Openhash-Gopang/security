@@ -1,0 +1,5 @@
+{
+  "name": "security-agent-test-deps",
+  "private": true,
+  "devDependencies": { "jsdom": "^26.0.0" }
+}
