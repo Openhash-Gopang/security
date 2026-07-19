@@ -436,26 +436,18 @@ async function send(text) {
   document.getElementById('send-btn').disabled = false;
 }
 
-// ── Supabase 원본 저장 ────────────────────────────────────
+// ── L1 PocketBase(hanlim) 원본 저장 — Supabase 전면 중단(2026-07-19) ──
 async function saveToSupabase(userMsg, aiReply) {
-  const url  = typeof SUPA_URL  !== 'undefined' ? SUPA_URL  : null;
-  const anon = typeof SUPA_ANON !== 'undefined' ? SUPA_ANON : null;
-  if (!url || !anon) return;
   try {
-    await fetch(`${url}/rest/v1/security_sessions`, {
+    await fetch('https://l1-hanlim.gopang.net/api/collections/security_sessions/records', {
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'apikey': anon, 'Authorization':'Bearer '+anon,
-        'Prefer':'return=minimal',
-      },
+      headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({
         user_ipv6:  _user?.ipv6 || null,
         auth_level: _user?.level || 'L0',
         user_msg:   userMsg,
         ai_reply:   aiReply,
         ctx:        _ctx,
-        created_at: new Date().toISOString(),
       }),
     });
   } catch {}

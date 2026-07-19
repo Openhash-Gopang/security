@@ -1,6 +1,7 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
+    <script src="/gopang-wallet.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>K-Security — 고팡 생태계 보안 인프라</title>
@@ -774,7 +775,7 @@ footer {
     <a href="dashboard.html">대시보드</a>
     <a href="security_whitepaper.html">백서</a>
     <a href="https://github.com/Openhash-Gopang/security" target="_blank">GitHub</a>
-    <a href="https://supabase.com/dashboard" target="_blank">Supabase</a>
+    <a href="https://l1-hanlim.gopang.net/_/" target="_blank">PocketBase</a>
   </div>
 </footer>
 
@@ -802,41 +803,21 @@ footer {
 </div>
 
 <script>
-// ── KPI 로드 ──────────────────────────────────────────────
-const SUPA_URL  = 'https://ebbecjfrwaswbdybbgiu.supabase.co';
-const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViYmVjamZyd2Fzd2JkeWJiZ2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NjE5ODQsImV4cCI6MjA5NTEzNzk4NH0.H2ahQKtWdSke04Pdi3hDY86pdTx7UUKPUpQMlS_zciA';
-const HDR = { apikey: SUPA_ANON, Authorization: 'Bearer ' + SUPA_ANON };
+// ── KPI 로드 (L1 PocketBase(hanlim) — Supabase 전면 중단 2026-07-19) ──
+const PB_URL = 'https://l1-hanlim.gopang.net';
 
 async function loadKPI() {
-  // Supabase 뷰·테이블이 없을 수 있으므로 모든 오류를 무시하고
-  // 데이터가 있을 때만 KPI를 갱신합니다.
   const el = document.getElementById('kpi-events');
-
-  // 1차: security_open_events 뷰
   try {
+    const filter = encodeURIComponent("status!='resolved'");
     const r = await fetch(
-      `${SUPA_URL}/rest/v1/security_open_events?select=id&limit=50`,
-      { headers: HDR }
+      `${PB_URL}/api/collections/security_event/records?filter=${filter}&perPage=50`
     );
     if (r.ok) {
-      const rows = await r.json();
-      if (Array.isArray(rows)) { el.textContent = rows.length; return; }
+      const data = await r.json();
+      if (Array.isArray(data.items)) { el.textContent = data.items.length; return; }
     }
   } catch {}
-
-  // 2차: security_event 테이블 직접 조회
-  try {
-    const r2 = await fetch(
-      `${SUPA_URL}/rest/v1/security_event?select=id&status=neq.resolved`,
-      { headers: HDR }
-    );
-    if (r2.ok) {
-      const rows2 = await r2.json();
-      if (Array.isArray(rows2)) { el.textContent = rows2.length; return; }
-    }
-  } catch {}
-
-  // 두 곳 모두 없으면 0 표시 (DB 미생성 상태)
   el.textContent = '0';
 }
 loadKPI();
@@ -868,3 +849,4 @@ document.addEventListener('keydown', e => {
 </script>
 </body>
 </html>
+

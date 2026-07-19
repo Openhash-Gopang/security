@@ -487,11 +487,11 @@ tbody td.td-mono { font-family: var(--mono); font-size: 12px; }
         <span>LIVE</span>
       </div>
       <span id="tb-clock"></span>
-      <a href="https://supabase.com/dashboard" target="_blank" class="tb-link">
+      <a href="https://l1-hanlim.gopang.net/_/" target="_blank" class="tb-link">
         <svg viewBox="0 0 12 12" fill="none">
           <path d="M2 6h8M6 2v8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
-        Supabase
+        PocketBase
       </a>
     </div>
   </div>
@@ -684,9 +684,7 @@ tbody td.td-mono { font-family: var(--mono); font-size: 12px; }
 
 <script>
 // ── 설정 ────────────────────────────────────────────────────
-const SUPA_URL  = 'https://ebbecjfrwaswbdybbgiu.supabase.co';
-const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViYmVjamZyd2Fzd2JkeWJiZ2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NjE5ODQsImV4cCI6MjA5NTEzNzk4NH0.H2ahQKtWdSke04Pdi3hDY86pdTx7UUKPUpQMlS_zciA';
-const HDR = { apikey: SUPA_ANON, Authorization: 'Bearer ' + SUPA_ANON };
+const PB_URL = 'https://l1-hanlim.gopang.net';
 
 // ── 시스템 정의 ──────────────────────────────────────────────
 const SYSTEMS = [
@@ -792,50 +790,46 @@ function catRows(cat) {
 // ── 데이터 조회 ──────────────────────────────────────────────
 async function fetchAll() {
   await Promise.all([
-    // security_status 뷰 → 없으면 security_log 최신 1건씩으로 대체
-    fetch(`${SUPA_URL}/rest/v1/security_status?select=*`, { headers: HDR })
+    // security_log 최신 200건 → svc별 최신 1건(_status) + 최근 1시간 집계(_uptime)
+    // PocketBase엔 SQL 뷰가 없어 여기서 직접 집계한다 (Supabase 뷰 대체).
+    fetch(`${PB_URL}/api/collections/security_log/records?sort=-created&perPage=200`)
       .then(async r => {
-        if (r.status === 404) {
-          // 뷰 미생성 시: security_log에서 직접 집계
-          const r2 = await fetch(
-            `${SUPA_URL}/rest/v1/security_log?select=svc,svc_url,status,latency_ms,auth_ok,pdv_ok,err_streak,last_error,created_at&order=created_at.desc&limit=200`,
-            { headers: { ...HDR, 'Cache-Control': 'max-age=240' } }
-          );
-          const rows2 = await r2.json();
-          if (Array.isArray(rows2)) {
-            // svc별 최신 1건만 유지
-            rows2.forEach(row => {
-              if (!_status[row.svc]) _status[row.svc] = row;
-            });
-          }
-          return;
-        }
-        const rows = await r.json();
-        if (Array.isArray(rows)) rows.forEach(r => _status[r.svc] = r);
+        const data = await r.json();
+        const rows = Array.isArray(data.items) ? data.items : [];
+        rows.forEach(row => { row.created_at = row.created; }); // PocketBase 필드명 정규화
+
+        rows.forEach(row => {
+          if (!_status[row.svc]) _status[row.svc] = row;
+        });
+
+        const oneHourAgo = Date.now() - 60 * 60 * 1000;
+        const grouped = {};
+        rows.forEach(row => {
+          const t = new Date(row.created).getTime();
+          if (t < oneHourAgo) return;
+          (grouped[row.svc] ||= []).push(row);
+        });
+        Object.entries(grouped).forEach(([svc, list]) => {
+          const total   = list.length;
+          const okCount = list.filter(r => r.status === 'ok').length;
+          const lats    = list.map(r => r.latency_ms).filter(Boolean);
+          _uptime[svc] = {
+            svc,
+            uptime_pct:     total ? ((okCount / total) * 100).toFixed(1) : null,
+            avg_latency_ms: lats.length ? Math.round(lats.reduce((a,b)=>a+b,0)/lats.length) : null,
+            max_latency_ms: lats.length ? Math.max(...lats) : null,
+            total_checks:   total,
+          };
+        });
       }).catch(()=>{}),
 
-    // security_uptime_1h 뷰 → 없으면 빈 객체 유지
-    fetch(`${SUPA_URL}/rest/v1/security_uptime_1h?select=*`, { headers: HDR })
+    // security_event 미해결 이벤트
+    fetch(`${PB_URL}/api/collections/security_event/records?filter=${encodeURIComponent("status!='resolved'")}&sort=-created&perPage=50`)
       .then(async r => {
-        if (r.status === 404) return; // 뷰 없으면 무시
-        const rows = await r.json();
-        if (Array.isArray(rows)) rows.forEach(r => _uptime[r.svc] = r);
-      }).catch(()=>{}),
-
-    // security_open_events 뷰 → 없으면 security_event 직접 조회
-    fetch(`${SUPA_URL}/rest/v1/security_open_events?select=*&limit=50`, { headers: HDR })
-      .then(async r => {
-        if (r.status === 404) {
-          const r2 = await fetch(
-            `${SUPA_URL}/rest/v1/security_event?select=*&status=neq.resolved&order=created_at.desc&limit=50`,
-            { headers: HDR }
-          );
-          const rows2 = await r2.json();
-          if (Array.isArray(rows2)) _events = rows2;
-          return;
-        }
-        const rows = await r.json();
-        if (Array.isArray(rows)) _events = rows;
+        const data = await r.json();
+        const rows = Array.isArray(data.items) ? data.items : [];
+        rows.forEach(row => { row.created_at = row.created; });
+        _events = rows;
       }).catch(()=>{}),
   ]);
 }

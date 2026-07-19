@@ -21,10 +21,8 @@
   const SVC_ID       = SCRIPT_EL?.dataset?.svc       || 'unknown';
   const SVC_URL      = SCRIPT_EL?.dataset?.url       || location.hostname;
   const AUTH_LEVEL   = SCRIPT_EL?.dataset?.authLevel || 'L0'; // subsystem-auth.js 전달값
-  // Supabase 직접 저장 (gopang-proxy /security/report 배포 전까지)
-  const SUPA_URL   = 'https://ebbecjfrwaswbdybbgiu.supabase.co';
-  const SUPA_ANON  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViYmVjamZyd2Fzd2JkeWJiZ2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NjE5ODQsImV4cCI6MjA5NTEzNzk4NH0.H2ahQKtWdSke04Pdi3hDY86pdTx7UUKPUpQMlS_zciA';
-  const REPORT_URL  = SUPA_URL + '/rest/v1/security_log';
+  // L1 PocketBase(hanlim) 직접 저장 — Supabase 전면 중단(2026-07-19)에 따라 이관
+  const REPORT_URL  = 'https://l1-hanlim.gopang.net/api/collections/security_log/records';
   const COMMAND_URL = null; // gopang-proxy 배포 후 활성화
   const INTERVAL_SEC = 24 * 60 * 60; // v1.1: 24시간 (기존 30초)
   const STORE_KEY    = `ksec_agent_${SVC_ID}`;
@@ -137,12 +135,7 @@
       };
       const res = await fetch(REPORT_URL, {
         method:  'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey':        SUPA_ANON,
-          'Authorization': 'Bearer ' + SUPA_ANON,
-          'Prefer':        'return=minimal',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body:      JSON.stringify(row),
         keepalive: true,
       });
@@ -382,9 +375,7 @@
       // sendBeacon은 커스텀 헤더 불가 → fetch keepalive로 대체
       fetch(REPORT_URL, {
         method: 'POST', keepalive: true,
-        headers: { 'Content-Type': 'application/json',
-                   'apikey': SUPA_ANON, 'Authorization': 'Bearer ' + SUPA_ANON,
-                   'Prefer': 'return=minimal' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(row),
       }).catch(()=>{});
     });
