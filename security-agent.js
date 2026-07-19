@@ -179,7 +179,7 @@
   // 개인키와 짝이 맞는 진짜 키로 반드시 교체해야 한다. 짝이 안 맞으면
   // 모든 서명 검증이 항상 실패한다(안전한 방향의 실패 — 명령이 전혀
   // 실행되지 않을 뿐, 위조된 명령이 통과하지는 않는다).
-  const K_SECURITY_PUBLIC_KEY_B64U = 'PvNb36dACs6kHUKJRW89muIta7wmsX56HMez8F2z2F0';
+  const K_SECURITY_PUBLIC_KEY_B64U = 'pQ95N6nW8CoduZk_qakJiRqk-SKIO53PXFKxHDpMSk8';
   const COMMAND_FRESHNESS_SEC = 300; // 5분 — 이보다 오래된 서명은 재생(replay) 공격으로 간주해 거부
   const KNOWN_COMMAND_TYPES = Object.freeze([
     'DIAGNOSE_NOW', 'SET_INTERVAL', 'SHOW_ALERT', 'HIDE_ALERT', 'SUSPEND', 'RESUME',
