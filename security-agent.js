@@ -22,7 +22,7 @@
   const SVC_URL      = SCRIPT_EL?.dataset?.url       || location.hostname;
   const AUTH_LEVEL   = SCRIPT_EL?.dataset?.authLevel || 'L0'; // subsystem-auth.js 전달값
   // L1 PocketBase(hanlim) 직접 저장 — Supabase 전면 중단(2026-07-19)에 따라 이관
-  const REPORT_URL  = 'https://l1-hanlim.gopang.net/api/collections/security_log/records';
+  const REPORT_URL  = 'https://l1-hanlim.hondi.net/api/collections/security_log/records';
   const COMMAND_URL = null; // gopang-proxy 배포 후 활성화
   const INTERVAL_SEC = 24 * 60 * 60; // v1.1: 24시간 (기존 30초)
   const STORE_KEY    = `ksec_agent_${SVC_ID}`;

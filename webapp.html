@@ -439,7 +439,7 @@ async function send(text) {
 // ── L1 PocketBase(hanlim) 원본 저장 — Supabase 전면 중단(2026-07-19) ──
 async function saveToSupabase(userMsg, aiReply) {
   try {
-    await fetch('https://l1-hanlim.gopang.net/api/collections/security_sessions/records', {
+    await fetch('https://l1-hanlim.hondi.net/api/collections/security_sessions/records', {
       method:'POST',
       headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({
