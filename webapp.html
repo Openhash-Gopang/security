@@ -387,6 +387,20 @@ function showTyping() {
 }
 function hideTyping() { document.getElementById('typing')?.remove(); }
 
+// ★ 2026-07-30 신설 — GWP facts(currentLocation) 파싱 (주피터 지시 —
+// gov 도메인을 넘어 서비스 전반으로 확장). callDeepSeek가 이미
+// currentLocation을 받으면 강제 주입하도록 되어 있다(2026-07-30).
+let GWP_FACTS = null;
+try {
+  const _qs = new URLSearchParams(location.search);
+  if (_qs.get('facts')) {
+    const raw = (_qs.get('facts_enc') === 'b64')
+      ? decodeURIComponent(escape(atob(_qs.get('facts'))))
+      : decodeURIComponent(_qs.get('facts'));
+    GWP_FACTS = JSON.parse(raw);
+  }
+} catch (e) { console.warn('[K-Security] facts 파싱 실패(무시):', e.message); }
+
 // ── AI 호출 ───────────────────────────────────────────────
 async function callAI(userMsg) {
   _history.push({ role:'user', content:userMsg });
@@ -396,6 +410,7 @@ async function callAI(userMsg) {
     body: JSON.stringify({
       model:'deepseek-chat', max_tokens:600, temperature:0.4,
       service_id: 'ksecurity', // 2026-07-05: worker.js가 UNIVERSAL 레이어 강제 주입
+      currentLocation: GWP_FACTS?.currentLocation || null,
       messages:[
         { role:'system', content:`당신은 K-Security AI입니다.
 고팡 생태계(gopang, school, health, traffic, gdc, klaw, police, 911, tax, stock,
